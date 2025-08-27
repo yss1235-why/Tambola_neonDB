@@ -18,7 +18,8 @@ import {
   Loader2,
   X
 } from 'lucide-react';
-import { GameData, TambolaTicket, firebaseService } from '@/services/firebase';
+import { supabaseService } from '@/services/supabase';
+import type { GameData, TambolaTicket } from '@/services/supabase-types';
 
 interface TicketManagementGridProps {
   gameData: GameData;
@@ -143,7 +144,7 @@ export const TicketManagementGrid: React.FC<TicketManagementGridProps> = ({
     setIsBooking(true);
     try {
       for (const ticketId of selectedTickets) {
-        await firebaseService.bookTicket(
+       await supabaseService.bookTicket(
           ticketId,
           bookingForm.playerName.trim(),
           bookingForm.playerPhone.trim(),
