@@ -21,10 +21,11 @@ import {
   Phone
 } from 'lucide-react';
 import { 
-  firebaseService, 
+  supabaseService, 
   HostUser, 
   AdminUser 
-} from '@/services/firebase';
+} from '@/services/supabase';
+
 
 interface AdminDashboardProps {
   user: AdminUser;
