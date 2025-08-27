@@ -5,7 +5,7 @@ export {
   useActiveGamesSubscription,
   useHostCurrentGameSubscription,
   cleanupAllSubscriptions
-} from './useFirebaseSubscription';
+} from './useSupabaseSubscription';
 
 // ✅ CHANGED: Export simplified auth hook instead of useLazyAuth
 export { useAuth } from './useAuth';
