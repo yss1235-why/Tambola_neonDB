@@ -1,6 +1,6 @@
 // src/hooks/index.ts - UPDATED: Export simplified auth instead of useLazyAuth
 export { 
-  useFirebaseSubscription,
+  useSupabaseSubscription,
   useGameSubscription,
   useActiveGamesSubscription,
   useHostCurrentGameSubscription,
