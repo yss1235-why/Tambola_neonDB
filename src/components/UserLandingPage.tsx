@@ -156,7 +156,7 @@ useEffect(() => {
     return;
   }
   
-  // STEP 2: Find the currently selected game from the real-time Firebase data
+  // STEP 2: Find the currently selected game from the real-time supabase data
   const selectedGame = gameDataSource.games?.find(g => g.gameId === selectedGameId);
   
   // STEP 3: If the game doesn't exist anymore, go back to the games list
@@ -236,7 +236,7 @@ useEffect(() => {
     if (!selectedGame) return;
 
     try {
-      await firebaseService.bookTicket(ticketId, playerName, playerPhone, selectedGame.gameId);
+      await supabaseService.bookTicket(ticketId, playerName, playerPhone, selectedGame.gameId);
       console.log('✅ Ticket booked successfully');
     } catch (error: any) {
       alert(error.message || 'Failed to book ticket');
