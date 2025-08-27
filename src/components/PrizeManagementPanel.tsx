@@ -9,7 +9,7 @@ import {
   CheckCircle,
   Target
 } from 'lucide-react';
-import { GameData, Prize } from '@/services/firebase';
+import { GameData, Prize } from '@/services/supabase';
 
 interface PrizeManagementPanelProps {
   gameData: GameData;
