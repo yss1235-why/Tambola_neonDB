@@ -8,7 +8,7 @@ import { UserDisplay } from './UserDisplay';
 import { RecentWinnersDisplay } from './RecentWinnersDisplay';
 import { GameDataProvider } from '@/providers/GameDataProvider';
 import { useActiveGamesSubscription } from '@/hooks/useSupabaseSubscription';
-import { supabaseService, GameData } from '@/services/supabase'; 
+import type { GameData } from '@/services/supabase-types';
 import { 
   Loader2, 
   Trophy, 
