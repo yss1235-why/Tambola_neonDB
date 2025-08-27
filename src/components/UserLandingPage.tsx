@@ -7,8 +7,8 @@ import { TicketBookingGrid } from './TicketBookingGrid';
 import { UserDisplay } from './UserDisplay';
 import { RecentWinnersDisplay } from './RecentWinnersDisplay';
 import { GameDataProvider } from '@/providers/GameDataProvider';
-import { useActiveGamesSubscription } from '@/hooks/useFirebaseSubscription';
-import { firebaseService, GameData } from '@/services/firebase';
+import { useActiveGamesSubscription } from '@/hooks/useSupabaseSubscription';
+import { supabaseService, GameData } from '@/services/supabase'; 
 import { 
   Loader2, 
   Trophy, 
