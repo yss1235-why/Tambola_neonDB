@@ -242,7 +242,7 @@ const {
 
             {currentPhase === 'playing' && (
               <>
-                {!hostControls?.firebasePaused ? (
+                {!hostControls?.supabasePaused ? (
                   <Button 
                     onClick={handlePauseGame} 
                     variant="secondary" 
@@ -263,7 +263,7 @@ const {
         >
           <Play className="w-4 h-4 mr-2" />
          {hostControls?.isProcessing ? 'Starting...' : 
-           hostControls?.countdownTime === 0 && hostControls?.firebasePaused ? 'Click to Start Number Calling' : 'Resume Automatic Game'}
+           hostControls?.countdownTime === 0 && hostControls?.supabasePaused ? 'Click to Start Number Calling' : 'Resume Automatic Game'}
         </Button>
         
         {/* ✅ NEW: Show auto-pause warning */}
