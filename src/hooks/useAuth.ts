@@ -1,15 +1,18 @@
-// src/hooks/useAuth.ts - SIMPLIFIED: Replaces useLazyAuth.ts completely
+// Supabase Authentication Hook
+// Replaces Firebase useAuth.ts - MUCH SIMPLER!
+
 import { useState, useEffect, useCallback } from 'react';
-import { onAuthStateChanged } from 'firebase/auth';
-import { auth, getCurrentUserRole, firebaseService, AdminUser, HostUser } from '@/services/firebase';
-import { cleanupAllSubscriptions } from './useFirebaseSubscription'; // ✅ ADDED: Import cleanup function
+import { supabaseAuth } from '@/services/supabase-auth';
+import { supabase } from '@/services/supabase';
+import type { AdminUser, HostUser } from '@/services/supabase-types';
+import { cleanupAllSubscriptions } from './useSupabaseSubscription';
 
 interface AuthState {
   user: AdminUser | HostUser | null;
   userRole: 'admin' | 'host' | null;
   loading: boolean;
   error: string | null;
-  initialized: boolean; // Keep for compatibility with existing components
+  initialized: boolean;
 }
 
 interface AuthActions {
@@ -17,130 +20,129 @@ interface AuthActions {
   loginHost: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   clearError: () => void;
-  initializeAuth: () => Promise<() => void>; // Keep for compatibility - but no-op
+  initializeAuth: () => Promise<() => void>; // For compatibility - no-op
 }
 
 /**
- * SIMPLIFIED Authentication Hook
+ * SIMPLIFIED Supabase Authentication Hook
  * 
- * Key Changes from useLazyAuth:
- * 1. Auth is ALWAYS initialized on app start (no lazy loading)
- * 2. No race conditions between initialization and login
- * 3. Simple, predictable state management
- * 4. Same interface as useLazyAuth for compatibility
- * 
- * FIXES:
- * - No more auto-login issues
- * - No more loading state hangs
- * - No more unexpected logouts
- * - Reliable, predictable authentication flow
- * - ✅ ADDED: Subscription cleanup before logout to prevent permission errors
+ * Benefits over Firebase version:
+ * ✅ No race conditions
+ * ✅ No complex lazy loading
+ * ✅ No subscription cleanup issues
+ * ✅ Simple, predictable state management
+ * ✅ Built-in error handling
  */
 export const useAuth = (): AuthState & AuthActions => {
   const [state, setState] = useState<AuthState>({
     user: null,
     userRole: null,
-    loading: true, // Start loading immediately
+    loading: true,
     error: null,
-    initialized: false // Will be set to true after first auth check
+    initialized: false
   });
 
-  // ✅ SIMPLIFIED: Auth is always initialized - no complex lazy loading
+  // ==================== INITIALIZE AUTH STATE ====================
+
   useEffect(() => {
-    console.log('🔐 Initializing simplified auth system...');
-    
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        try {
-          console.log('🔐 User session detected:', firebaseUser.email);
-          
-          const role = await getCurrentUserRole();
-          
-          if (role) {
-            const userData = await firebaseService.getUserData();
+    console.log('🔐 Initializing Supabase auth system...');
+
+    let isMounted = true;
+
+    // Listen to auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('🔐 Auth event:', event, session?.user?.email || 'no user');
+
+        if (!isMounted) return;
+
+        if (event === 'SIGNED_IN' && session?.user) {
+          try {
+            console.log('🔐 User signed in, loading profile...');
             
-            if (userData) {
+            const userData = await supabaseAuth.getUserData();
+            const role = await supabaseAuth.getCurrentUserRole();
+
+            if (userData && role) {
               setState({
                 user: userData,
-                userRole: role,
+                userRole: role as 'admin' | 'host',
                 loading: false,
                 initialized: true,
                 error: null
               });
-              console.log('✅ Simplified Auth: User profile loaded successfully');
+              console.log('✅ User profile loaded successfully:', userData.email);
             } else {
-              console.log('❌ Simplified Auth: Failed to load user profile');
+              console.warn('⚠️ User authenticated but no profile found');
               setState({
                 user: null,
                 userRole: null,
                 loading: false,
                 initialized: true,
-                error: 'Failed to load user profile'
+                error: 'User profile not found'
               });
             }
-          } else {
-            console.log('❌ Simplified Auth: Invalid user role');
+          } catch (error: any) {
+            console.error('❌ Error loading user profile:', error);
             setState({
               user: null,
               userRole: null,
               loading: false,
               initialized: true,
-              error: 'Invalid user role'
+              error: error.message || 'Failed to load user profile'
             });
           }
-        } catch (error: any) {
-          console.error('❌ Simplified Auth: Error loading user data:', error);
+        } else if (event === 'SIGNED_OUT' || !session) {
+          console.log('🔐 User signed out or no session');
           setState({
             user: null,
             userRole: null,
             loading: false,
             initialized: true,
-            error: error.message || 'Authentication error'
+            error: null
           });
         }
-      } else {
-        console.log('🔐 No user session found (user logged out or first visit)');
-        setState({
-          user: null,
-          userRole: null,
-          loading: false,
-          initialized: true,
-          error: null
+      }
+    );
+
+    // Set timeout to prevent hanging in loading state
+    const loadingTimeout = setTimeout(() => {
+      if (isMounted) {
+        setState(prev => {
+          if (prev.loading && !prev.initialized) {
+            console.warn('⚠️ Auth loading timeout reached');
+            return {
+              ...prev,
+              loading: false,
+              initialized: true
+            };
+          }
+          return prev;
         });
       }
-    });
-
-    // Set a timeout to ensure we don't hang in loading state
-    const loadingTimeout = setTimeout(() => {
-      setState(prev => {
-        if (prev.loading && !prev.initialized) {
-          console.warn('⚠️ Auth loading timeout reached, resolving...');
-          return {
-            ...prev,
-            loading: false,
-            initialized: true
-          };
-        }
-        return prev;
-      });
-    }, 5000); // 5 second timeout
+    }, 5000);
 
     return () => {
-      console.log('🧹 Cleaning up simplified auth listener');
+      isMounted = false;
       clearTimeout(loadingTimeout);
-      unsubscribe();
+      subscription.unsubscribe();
+      console.log('🧹 Auth cleanup completed');
     };
-  }, []); // ✅ SIMPLIFIED: No dependencies, runs once
+  }, []);
 
-  // ✅ SIMPLIFIED: Direct admin login - no initialization needed
+  // ==================== LOGIN METHODS ====================
+
   const loginAdmin = useCallback(async (email: string, password: string) => {
     setState(prev => ({ ...prev, loading: true, error: null }));
     
     try {
-      console.log('🔐 Admin login attempt:', email);
-      await firebaseService.loginAdmin(email, password);
-      console.log('✅ Admin login successful - auth state will update automatically');
-      // State will be updated by onAuthStateChanged listener
+      console.log('🔐 Admin login attempt for:', email);
+      
+      const adminUser = await supabaseAuth.loginAdmin(email, password);
+      
+      // State will be updated by onAuthStateChange listener
+      console.log('✅ Admin login successful');
+      
     } catch (error: any) {
       console.error('❌ Admin login failed:', error);
       setState(prev => ({ 
@@ -152,15 +154,17 @@ export const useAuth = (): AuthState & AuthActions => {
     }
   }, []);
 
-  // ✅ SIMPLIFIED: Direct host login - no initialization needed  
   const loginHost = useCallback(async (email: string, password: string) => {
     setState(prev => ({ ...prev, loading: true, error: null }));
     
     try {
-      console.log('🔐 Host login attempt:', email);
-      await firebaseService.loginHost(email, password);
-      console.log('✅ Host login successful - auth state will update automatically');
-      // State will be updated by onAuthStateChanged listener
+      console.log('🔐 Host login attempt for:', email);
+      
+      const hostUser = await supabaseAuth.loginHost(email, password);
+      
+      // State will be updated by onAuthStateChange listener
+      console.log('✅ Host login successful');
+      
     } catch (error: any) {
       console.error('❌ Host login failed:', error);
       setState(prev => ({ 
@@ -172,22 +176,23 @@ export const useAuth = (): AuthState & AuthActions => {
     }
   }, []);
 
-  // ✅ FIXED: Logout with subscription cleanup to prevent permission errors
   const logout = useCallback(async () => {
     setState(prev => ({ ...prev, loading: true, error: null }));
     
     try {
       console.log('🔐 Logout initiated...');
       
-      // ✅ ADDED: Cleanup all subscriptions BEFORE logout to prevent permission errors
-      console.log('🧹 Cleaning up all subscriptions before logout...');
+      // Clean up subscriptions before logout
+      console.log('🧹 Cleaning up subscriptions before logout...');
       cleanupAllSubscriptions();
       
-      await firebaseService.logout();
-      console.log('✅ Logout successful - auth state will update automatically');
-      // State will be updated by onAuthStateChanged listener
+      await supabaseAuth.logout();
+      
+      // State will be updated by onAuthStateChange listener
+      console.log('✅ Logout successful');
+      
     } catch (error: any) {
-      console.error('❌ Logout error:', error);
+      console.error('❌ Logout failed:', error);
       setState(prev => ({ 
         ...prev, 
         loading: false, 
@@ -197,17 +202,20 @@ export const useAuth = (): AuthState & AuthActions => {
     }
   }, []);
 
+  // ==================== UTILITY METHODS ====================
+
   const clearError = useCallback(() => {
     console.log('🧹 Clearing auth error');
     setState(prev => ({ ...prev, error: null }));
   }, []);
 
-  // ✅ COMPATIBILITY: Keep initializeAuth for existing components but make it a no-op
+  // Compatibility method - no-op since auth is always initialized
   const initializeAuth = useCallback(async (): Promise<() => void> => {
-    // No-op since auth is always initialized in simplified version
-    console.log('🔐 initializeAuth called (no-op in simplified version - auth already ready)');
-    return () => {}; // Return empty cleanup function for compatibility
+    console.log('🔐 initializeAuth called (no-op in Supabase version)');
+    return () => {}; // Empty cleanup function
   }, []);
+
+  // ==================== RETURN STATE & ACTIONS ====================
 
   return {
     ...state,
@@ -217,4 +225,47 @@ export const useAuth = (): AuthState & AuthActions => {
     clearError,
     initializeAuth
   };
+};
+
+// ==================== ADDITIONAL HELPERS ====================
+
+/**
+ * Hook to check if current user has specific role
+ */
+export const useAuthRole = (requiredRole: 'admin' | 'host') => {
+  const { user, userRole, loading } = useAuth();
+  
+  return {
+    hasRole: userRole === requiredRole,
+    user,
+    loading
+  };
+};
+
+/**
+ * Hook to get current session
+ */
+export const useSession = () => {
+  const [session, setSession] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setLoading(false);
+    });
+
+    // Listen for changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setSession(session);
+        setLoading(false);
+      }
+    );
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  return { session, loading };
 };
