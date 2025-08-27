@@ -12,7 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { AdminUser, HostUser } from '@/services/firebase';
+import type { AdminUser, HostUser } from '@/services/supabase-types';
 
 interface HeaderProps {
   currentUser: AdminUser | HostUser | null;
