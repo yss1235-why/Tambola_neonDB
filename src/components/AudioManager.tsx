@@ -1,6 +1,6 @@
 // src/components/AudioManager.tsx - FIXED: Better user audio experience
 import React, { useEffect, useRef, useCallback, useState } from 'react';
-import { Prize } from '@/services/firebase';
+import { Prize } from '@/services/supabase';
 
 interface AudioManagerProps {
   currentNumber: number | null;
