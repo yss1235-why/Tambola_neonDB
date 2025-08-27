@@ -431,14 +431,14 @@ const [gameCreationError, setGameCreationError] = useState<string | null>(null);
         console.log(`📈 Ticket expansion needed: ${currentMaxTickets} → ${newMaxTickets} (+${newMaxTickets - currentMaxTickets} tickets)`);
         
         // Use expansion method for ticket count increase
-        await firebaseService.expandGameTickets(
+        await supabaseService.expandGameTickets(
           gameData.gameId,
           newMaxTickets,
           createGameForm.selectedTicketSet
         );
         
         // Update host template separately (expansion method doesn't handle template)
-        await firebaseService.updateHostTemplate(user.uid, {
+        await supabaseService.updateHostTemplate(user.uid, {
           hostPhone: createGameForm.hostPhone.trim(),
           maxTickets: newMaxTickets,
           selectedTicketSet: createGameForm.selectedTicketSet,
@@ -451,7 +451,7 @@ const [gameCreationError, setGameCreationError] = useState<string | null>(null);
         // No ticket expansion needed - use existing update method
         console.log(`📝 Standard settings update (no ticket expansion)`);
         
-        await firebaseService.updateGameAndTemplate(
+        await supabaseService.updateGameAndTemplate(
           gameData.gameId,
           user.uid,
           updateData
