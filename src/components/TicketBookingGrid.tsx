@@ -3,7 +3,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Phone, User, Users, Loader2, Activity, Clock } from 'lucide-react';
-import { TambolaTicket, GameData, firebaseService } from '@/services/firebase';
+import { supabaseService } from '@/services/supabase';
+import type { TambolaTicket, GameData } from '@/services/supabase-types';
 
 interface TicketBookingGridProps {
   tickets: { [key: string]: TambolaTicket };
@@ -35,7 +36,7 @@ export const TicketBookingGrid: React.FC<TicketBookingGridProps> = ({
       subscriptionRef.current();
     }
 
-    const unsubscribe = firebaseService.subscribeToGame(gameData.gameId, (updatedGameData) => {
+   const unsubscribe = supabaseService.subscribeToGame(gameData.gameId, (updatedGameData) => {
       if (updatedGameData) {
         console.log('📡 TicketBooking: Game state updated:', {
           isActive: updatedGameData.gameState.isActive,
@@ -78,7 +79,7 @@ export const TicketBookingGrid: React.FC<TicketBookingGridProps> = ({
           setHostPhone(realTimeGameData.hostPhone);
         } else {
           // Fallback to host profile
-          const host = await firebaseService.getHostById(realTimeGameData.hostId);
+          const host = await supabaseService.getHostById(realTimeGameData.hostId);
           if (host && host.phone) {
             setHostPhone(host.phone);
           }
