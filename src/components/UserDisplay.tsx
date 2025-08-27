@@ -21,7 +21,7 @@ import { useGameData } from '@/providers/GameDataProvider';
 import { NumberGrid } from './NumberGrid';
 import { AudioManager } from './AudioManager';
 import { AudioStatusComponent } from './AudioStatusComponent';
-import { TambolaTicket } from '@/services/firebase';
+import type { TambolaTicket } from '@/services/supabase-types';
 import { renderTicket } from '@/utils/ticketRenderer';
 
 interface SearchedTicket {
