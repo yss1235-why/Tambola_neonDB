@@ -30,11 +30,8 @@ import {
   Crown,
   Timer
 } from 'lucide-react';
-import { 
-  firebaseService, 
-  HostUser,
-  GameData
-} from '@/services/firebase';
+import { supabaseService } from '@/services/supabase';
+import type { HostUser, GameData } from '@/services/supabase-types';
 import { useGameData, useBookingStats } from '@/providers/GameDataProvider';
 import { HostControlsProvider } from '@/providers/HostControlsProvider';
 
@@ -552,7 +549,7 @@ const createNewGame = async () => {
 if (cachedWinnerData) {
   console.log('🗑️ Deleting previous completed game immediately before creating new one:', cachedWinnerData.gameId);
   try {
-    await firebaseService.deleteGame(cachedWinnerData.gameId);
+   await supabaseService.deleteGame(cachedWinnerData.gameId);
     console.log('✅ Previous game deleted successfully');
   } catch (deleteError) {
     console.error('⚠️ Error deleting previous game (continuing with creation):', deleteError);
@@ -562,7 +559,7 @@ if (cachedWinnerData) {
 }
       
       // Save host template settings
-      await firebaseService.saveHostSettings(user.uid, {
+     await supabaseService.saveHostSettings(user.uid, {
         hostPhone: createGameForm.hostPhone,
         maxTickets: maxTicketsNum,
         selectedTicketSet: createGameForm.selectedTicketSet,
@@ -576,7 +573,7 @@ if (cachedWinnerData) {
         hostPhone: createGameForm.hostPhone
       };
 
-      const newGame = await firebaseService.createGame(
+     const newGame = await supabaseService.createGame(
         gameConfig,
         user.uid,
         createGameForm.selectedTicketSet,
@@ -626,7 +623,7 @@ if (cachedWinnerData) {
     });
 
     try {
-      await firebaseService.deleteGame(gameData.gameId);
+     await supabaseService.deleteGame(gameData.gameId);
       console.log('✅ Game deleted successfully');
       
       setOperation(prev => ({
@@ -674,7 +671,7 @@ if (cachedWinnerData) {
     const loadPreviousSettings = async () => {
       try {
         console.log('🔧 Loading previous host settings...');
-        const settings = await firebaseService.getHostSettings(user.uid);
+        const settings = await supabaseService.getHostSettings(user.uid);
         if (settings) {
           console.log('✅ Previous settings loaded');
           setCreateGameForm(prev => ({
