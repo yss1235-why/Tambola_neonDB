@@ -169,7 +169,7 @@ export const TicketManagementGrid: React.FC<TicketManagementGridProps> = ({
     setIsUpdating(true);
     try {
       // Use bookTicket to update player information (since ticket is already booked)
-      await firebaseService.bookTicket(
+      await supabaseService.bookTicket(
         editingTicket.ticketId,
         editForm.playerName.trim(),
         editForm.playerPhone.trim(),
@@ -193,7 +193,7 @@ export const TicketManagementGrid: React.FC<TicketManagementGridProps> = ({
     
     setIsCanceling(ticketId);
     try {
-      await firebaseService.unbookTicket(gameData.gameId, ticketId);
+      await supabaseService.unbookTicket(gameData.gameId, ticketId);
       onRefreshGame();
     } catch (error) {
       console.error('Error canceling booking:', error);
@@ -206,7 +206,7 @@ export const TicketManagementGrid: React.FC<TicketManagementGridProps> = ({
   const expandTickets = async () => {
     setIsExpanding(true);
     try {
-      await firebaseService.expandGameTickets(gameData.gameId, gameData.maxTickets);
+      await supabaseService.expandGameTickets(gameData.gameId, gameData.maxTickets);
       onRefreshGame();
     } catch (error) {
       console.error('Error expanding tickets:', error);
