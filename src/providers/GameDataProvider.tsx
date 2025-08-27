@@ -1,7 +1,9 @@
-// src/providers/GameDataProvider.tsx - FIXED: Better loading state management
+// Supabase Game Data Provider
+// Replaces Firebase GameDataProvider - MUCH SIMPLER!
+
 import React, { createContext, useContext, useMemo } from 'react';
-import { GameData } from '@/services/firebase';
-import { useGameSubscription, useHostCurrentGameSubscription } from '@/hooks/useFirebaseSubscription';
+import { useGameSubscription, useHostCurrentGameSubscription } from '@/hooks/useSupabaseSubscription';
+import type { GameData } from '@/services/supabase-types';
 
 // Game phase enum for cleaner state management
 export type GamePhase = 'creation' | 'setup' | 'booking' | 'countdown' | 'playing' | 'finished';
@@ -23,8 +25,14 @@ interface GameDataProviderProps {
 }
 
 /**
- * Simplified GameDataProvider - Only handles data, no subscriptions or actions
- * FIXED: Better loading state management to prevent infinite loading
+ * SIMPLIFIED Supabase GameDataProvider
+ * 
+ * Benefits over Firebase version:
+ * ✅ No complex subscription deduplication
+ * ✅ No race conditions between multiple subscriptions  
+ * ✅ Simple, predictable data flow
+ * ✅ Built-in error handling
+ * ✅ Automatic cleanup
  */
 export const GameDataProvider: React.FC<GameDataProviderProps> = ({
   children,
@@ -34,106 +42,50 @@ export const GameDataProvider: React.FC<GameDataProviderProps> = ({
   // Determine subscription type based on props
   const isHostMode = !!userId && (!gameId || gameId === 'HOST_CURRENT');
   
-  // Use appropriate subscription
+  // Use appropriate subscription hook
   const hostGameSub = useHostCurrentGameSubscription(isHostMode ? userId : null);
   const directGameSub = useGameSubscription(!isHostMode && gameId ? gameId : null);
   
   // Select active subscription data
   const activeSubscription = isHostMode ? hostGameSub : directGameSub;
-  const gameData = activeSubscription.data;
-  const subscriptionLoading = activeSubscription.loading;
-  const error = activeSubscription.error;
+  const { data: gameData, loading: isLoading, error } = activeSubscription;
 
-  // ✅ FIXED: Better loading state logic
-  // Only show loading for a reasonable amount of time
-  const [loadingStartTime] = React.useState(Date.now());
-  const isLoading = useMemo(() => {
-    // If subscription resolved (loading false) or has data/error, don't show loading
-    if (!subscriptionLoading || gameData || error) {
-      return false;
-    }
-    
-    // If loading for more than 5 seconds, stop showing loading
-    const loadingTime = Date.now() - loadingStartTime;
-    if (loadingTime > 5000) {
-      console.warn('GameDataProvider: Loading timeout reached, resolving...');
-      return false;
-    }
-    
-    return true;
-  }, [subscriptionLoading, gameData, error, loadingStartTime]);
+  // ==================== COMPUTED VALUES ====================
 
-  // Calculate current game phase (pure function)
-  const currentPhase = useMemo((): GamePhase => {
-    if (!gameData) {
-      return 'creation';
-    }
-
-    const { gameState } = gameData;
+  // Determine current game phase
+  const currentPhase: GamePhase = useMemo(() => {
+    if (!gameData) return 'creation';
     
-    if (gameState.gameOver) {
-      return 'finished';
+    switch (gameData.status) {
+      case 'setup':
+        return 'setup';
+      case 'countdown':
+        return 'countdown';
+      case 'active':
+        return gameData.game_state?.isActive ? 'playing' : 'booking';
+      case 'paused':
+        return 'playing'; // Still in playing phase, just paused
+      case 'finished':
+        return 'finished';
+      default:
+        return 'setup';
     }
-    
-    if (gameState.isCountdown) {
-      return 'countdown';
-    }
-    
-    if (gameState.isActive || (gameState.calledNumbers && gameState.calledNumbers.length > 0)) {
-      return 'playing';
-    }
-    
-    return 'booking';
   }, [gameData]);
 
-  // Calculate time until next action (pure function)
-  const timeUntilAction = useMemo((): number => {
-    if (currentPhase === 'countdown' && gameData?.gameState.countdownTime) {
-      return gameData.gameState.countdownTime;
-    }
-    return 0;
-  }, [currentPhase, gameData?.gameState.countdownTime]);
-
-  // ✅ FIXED: Debug logging for host mode
-  React.useEffect(() => {
-    if (isHostMode) {
-      console.log(`🎮 GameDataProvider (Host Mode):`, {
-        userId,
-        gameData: gameData ? `Found: ${gameData.gameId}` : 'None',
-        currentPhase,
-        isLoading,
-        subscriptionLoading,
-        error
-      });
-    }
- }, [isHostMode, userId, gameData, currentPhase, isLoading, subscriptionLoading, error]);
-
-  // ✅ NEW: Listen for explicit game end events
-  React.useEffect(() => {
-    const handleGameEnd = (event: CustomEvent) => {
-      const { gameId: endedGameId, showWinners, gameData: endedGameData } = event.detail;
-      console.log(`🎉 GameDataProvider received game end event for ${endedGameId} - current game: ${gameData?.gameId}`);
-      
-      if (gameData?.gameId === endedGameId && endedGameData) {
-        console.log('✅ Game end event matches current game - data should auto-update via subscription');
-        
-        // Since this provider uses subscriptions, the data should auto-update
-        // This event listener is mainly for debugging and potential manual refresh
-        if (endedGameData.gameState?.gameOver) {
-          console.log('🏆 Game Over confirmed - winner display should now show');
-        }
-      }
-    };
-
-    window.addEventListener('tambola-game-ended', handleGameEnd as EventListener);
+  // Calculate time until next action (for countdown, etc.)
+  const timeUntilAction = useMemo(() => {
+    if (!gameData) return 0;
     
-    return () => {
-      window.removeEventListener('tambola-game-ended', handleGameEnd as EventListener);
-    };
-  }, [gameData?.gameId]);
+    if (currentPhase === 'countdown') {
+      return gameData.game_state?.countdownTime || 0;
+    }
+    
+    return 0;
+  }, [gameData, currentPhase]);
 
-  // Create stable context value
-  const contextValue = useMemo((): GameDataContextValue => ({
+  // ==================== CONTEXT VALUE ====================
+
+  const contextValue: GameDataContextValue = useMemo(() => ({
     gameData,
     currentPhase,
     timeUntilAction,
@@ -148,69 +100,118 @@ export const GameDataProvider: React.FC<GameDataProviderProps> = ({
   );
 };
 
+// ==================== CUSTOM HOOK ====================
+
 /**
- * Hook to access game data from any child component
+ * Hook to consume game data context
  */
 export const useGameData = (): GameDataContextValue => {
   const context = useContext(GameDataContext);
+  
   if (!context) {
     throw new Error('useGameData must be used within a GameDataProvider');
   }
+  
   return context;
 };
 
+// ==================== ADDITIONAL HELPER HOOKS ====================
+
 /**
- * Utility hooks for specific data needs
+ * Hook to get specific game data with automatic subscription
  */
+export const useSpecificGame = (gameId: string | null) => {
+  return useGameSubscription(gameId);
+};
 
-// Get booking statistics
-export const useBookingStats = () => {
+/**
+ * Hook to get host's current game with automatic subscription
+ */
+export const useHostGame = (hostId: string | null) => {
+  return useHostCurrentGameSubscription(hostId);
+};
+
+/**
+ * Hook to check if game is in specific phase
+ */
+export const useGamePhase = (targetPhase: GamePhase) => {
+  const { currentPhase, gameData } = useGameData();
+  
+  return {
+    isInPhase: currentPhase === targetPhase,
+    currentPhase,
+    gameData
+  };
+};
+
+/**
+ * Hook to get game statistics
+ */
+export const useGameStats = () => {
   const { gameData } = useGameData();
   
   return useMemo(() => {
-    if (!gameData?.tickets) {
-      return { bookedCount: 0, availableCount: 0, totalCount: 0 };
+    if (!gameData) {
+      return {
+        totalNumbers: 90,
+        calledNumbers: 0,
+        remainingNumbers: 90,
+        progress: 0
+      };
     }
-    
-    const bookedCount = Object.values(gameData.tickets).filter(t => t.isBooked).length;
-    const totalCount = gameData.maxTickets;
-    const availableCount = totalCount - bookedCount;
-    
-    return { bookedCount, availableCount, totalCount };
-  }, [gameData?.tickets, gameData?.maxTickets]);
+
+    const calledCount = gameData.game_state?.totalNumbersCalled || 0;
+    const totalNumbers = 90;
+    const remainingNumbers = totalNumbers - calledCount;
+    const progress = (calledCount / totalNumbers) * 100;
+
+    return {
+      totalNumbers,
+      calledNumbers: calledCount,
+      remainingNumbers,
+      progress: Math.round(progress)
+    };
+  }, [gameData]);
 };
 
-// Get game progress
-export const useGameProgress = () => {
+/**
+ * Hook to check game permissions for current user
+ */
+export const useGamePermissions = () => {
   const { gameData } = useGameData();
-  
+  const [currentUser, setCurrentUser] = React.useState<any>(null);
+
+  // Get current user (simplified)
+  React.useEffect(() => {
+    const getCurrentUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setCurrentUser(user);
+    };
+    getCurrentUser();
+  }, []);
+
   return useMemo(() => {
-    if (!gameData?.gameState.calledNumbers) {
-      return { called: 0, remaining: 90, percentage: 0 };
+    if (!gameData || !currentUser) {
+      return {
+        canManage: false,
+        canPlay: true,
+        isHost: false,
+        isAdmin: false
+      };
     }
-    
-    const called = gameData.gameState.calledNumbers.length;
-    const remaining = 90 - called;
-    const percentage = Math.round((called / 90) * 100);
-    
-    return { called, remaining, percentage };
-  }, [gameData?.gameState.calledNumbers]);
+
+    const isHost = gameData.host_id === currentUser.id;
+    const userRole = currentUser.user_metadata?.role;
+    const isAdmin = userRole === 'admin';
+
+    return {
+      canManage: isHost || isAdmin,
+      canPlay: true,
+      isHost,
+      isAdmin
+    };
+  }, [gameData, currentUser]);
 };
 
-// Get prize statistics
-export const usePrizeStats = () => {
-  const { gameData } = useGameData();
-  
-  return useMemo(() => {
-    if (!gameData?.prizes) {
-      return { total: 0, won: 0, remaining: 0 };
-    }
-    
-    const prizes = Object.values(gameData.prizes);
-    const total = prizes.length;
-    const won = prizes.filter(p => p.won).length;
-    const remaining = total - won;
-    
-    return { total, won, remaining };
-  }, [gameData?.prizes]);
-};
+// Re-export for compatibility with existing code
+export default GameDataProvider;
