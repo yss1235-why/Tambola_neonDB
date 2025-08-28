@@ -152,8 +152,8 @@ const Index = () => {
         {/* Gesture Detection for Admin Access */}
         <GestureDetector
           config={DEFAULT_GESTURE_CONFIG}
-          onGestureDetected={handleAdminGesture}
-          isActive={!currentUser}
+          onGestureComplete={handleAdminGesture}
+          enabled={!currentUser}
         />
         
         {/* Admin Login Modal (via gesture) */}
