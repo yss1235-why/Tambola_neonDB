@@ -26,7 +26,7 @@ import {
   ChevronUp,
   User
 } from 'lucide-react';
-import { useGameData, useBookingStats } from '@/providers/GameDataProvider';
+import { useGameData } from '@/providers/GameDataProvider';
 import { useHostControls } from '@/providers/HostControlsProvider';
 // ✅ Import simplified winner component
 import { SimplifiedWinnerDisplay } from './SimplifiedWinnerDisplay';
@@ -37,7 +37,7 @@ interface HostDisplayProps {
 
 export const HostDisplay: React.FC<HostDisplayProps> = ({ onCreateNewGame }) => {
   const { gameData, currentPhase, timeUntilAction, isLoading, error } = useGameData();
-  const { bookedCount } = useBookingStats();
+ const bookedCount = gameData ? Object.values(gameData.tickets || {}).filter(t => t.isBooked).length : 0;
   const hostControls = useHostControls();
 // ✅ Extract new properties
 const {
