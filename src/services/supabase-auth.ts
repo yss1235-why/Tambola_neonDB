@@ -552,12 +552,11 @@ async getUserData(): Promise<User | null> {
   /**
    * Get user data using session user (avoids extra API call)
    */
-  async getUserDataFromSession(sessionUser: any): Promise<User | null> {
-    try {
-      console.log('🔍 getUserDataFromSession: Starting for user:', sessionUser.id);
+ console.log('🔍 getUserDataFromSession: Starting for user:', sessionUser.id);
       
       // Use the session user ID directly instead of calling getUser() again
       const userId = sessionUser.id;
+      console.log('🔍 getUserDataFromSession: About to query admins table...');
       
       // Try to get admin data first
       const { data: adminData, error: adminError } = await supabase
@@ -565,6 +564,8 @@ async getUserData(): Promise<User | null> {
         .select('*')
         .eq('id', userId)
         .single();
+      
+      console.log('🔍 getUserDataFromSession: Admin query completed:', { adminData, adminError });
 
       if (adminError && adminError.code !== 'PGRST116') {
         console.error('Error querying admin table:', adminError);
