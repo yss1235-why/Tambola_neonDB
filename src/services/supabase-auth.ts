@@ -156,13 +156,19 @@ class SupabaseAuthService {
   /**
    * Get current user data (admin or host)
    */
-  async getUserData(): Promise<User | null> {
+async getUserData(): Promise<User | null> {
     try {
+      console.log('🔍 getUserData: Starting...');
+      
       const { data: { user } } = await supabase.auth.getUser();
+      console.log('🔍 getUserData: Got user from auth:', user?.id);
       
       if (!user) {
+        console.log('🔍 getUserData: No user found');
         return null;
       }
+      
+      console.log('🔍 getUserData: About to query database for user:', user.id);
 
      // Try to get admin data first
       const { data: adminData, error: adminError } = await supabase
