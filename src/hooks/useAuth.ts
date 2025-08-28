@@ -60,7 +60,8 @@ export const useAuth = (): AuthState & AuthActions => {
           try {
             console.log('🔐 User signed in, loading profile...');
             
-            const userData = await supabaseAuth.getUserData();
+            // Use session user directly instead of making another API call
+            const userData = await supabaseAuth.getUserDataFromSession(session.user);
             const role = userData?.role || null;
 
             if (userData && role) {
