@@ -102,7 +102,7 @@ const Index = () => {
           {/* Admin Dashboard */}
           {userRole === 'admin' && (
             <AdminDashboard 
-              admin={currentUser as AdminUser}
+              user={currentUser as AdminUser}   // ← CORRECT
               games={allGames || []}
               gamesLoading={gamesLoading}
             />
