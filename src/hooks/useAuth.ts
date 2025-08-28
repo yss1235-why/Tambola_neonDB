@@ -61,7 +61,7 @@ export const useAuth = (): AuthState & AuthActions => {
             console.log('🔐 User signed in, loading profile...');
             
             const userData = await supabaseAuth.getUserData();
-            const role = await supabaseAuth.getCurrentUserRole();
+            const role = userData?.role || null;
 
             if (userData && role) {
               setState({
