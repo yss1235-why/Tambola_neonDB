@@ -32,7 +32,7 @@ import {
 } from 'lucide-react';
 import { supabaseService } from '@/services/supabase';
 import type { HostUser, GameData } from '@/services/supabase-types';
-import { useGameData, useBookingStats } from '@/providers/GameDataProvider';
+import { useGameData } from '@/providers/GameDataProvider';
 import { HostControlsProvider } from '@/providers/HostControlsProvider';
 
 interface GameHostProps {
@@ -215,7 +215,7 @@ const AudioManagerForPlayer: React.FC<{
 };
 export const GameHost: React.FC<GameHostProps> = ({ user }) => {
   const { gameData, currentPhase, isLoading, error } = useGameData();
-  const { bookedCount } = useBookingStats();
+ const bookedCount = gameData ? Object.values(gameData.tickets || {}).filter(t => t.isBooked).length : 0;
   
   // ================== SAFETY AND VALIDATION UTILITIES ==================
 
