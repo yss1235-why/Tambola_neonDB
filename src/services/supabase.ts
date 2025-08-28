@@ -3,6 +3,8 @@
 
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './supabase-types';
+import { supabaseAuth } from './supabase-auth';
+import { supabaseGame } from './supabase-game';
 
 // Initialize Supabase client
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
