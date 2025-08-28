@@ -164,14 +164,20 @@ class SupabaseAuthService {
         return null;
       }
 
-      // Try to get admin data first
-      const { data: adminData } = await supabase
+     // Try to get admin data first
+      const { data: adminData, error: adminError } = await supabase
         .from('admins')
         .select('*')
         .eq('id', user.id)
         .single();
 
+      if (adminError && adminError.code !== 'PGRST116') {
+        console.error('Error querying admin table:', adminError);
+        throw new Error(`Database error: ${adminError.message}`);
+      }
+
       if (adminData) {
+        console.log('✅ Found admin record');
         return {
           ...adminData,
           role: 'admin'
@@ -179,13 +185,19 @@ class SupabaseAuthService {
       }
 
       // Try to get host data
-      const { data: hostData } = await supabase
+      const { data: hostData, error: hostError } = await supabase
         .from('hosts')
         .select('*')
         .eq('id', user.id)
         .single();
 
+      if (hostError && hostError.code !== 'PGRST116') {
+        console.error('Error querying host table:', hostError);
+        throw new Error(`Database error: ${hostError.message}`);
+      }
+
       if (hostData) {
+        console.log('✅ Found host record');
         return {
           ...hostData,
           role: 'host'
