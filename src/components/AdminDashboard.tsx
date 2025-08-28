@@ -142,7 +142,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
         createForm.password,
         createForm.name,
         createForm.phone,
-        user.uid,
+        user.id,
         createForm.subscriptionMonths
       );
 
@@ -171,7 +171,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
       const subscriptionEndDate = new Date();
       subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + editForm.subscriptionMonths);
 
-     await supabaseService.updateHost(selectedHost.uid, {
+    await supabaseService.updateHost(selectedHost.id, {
         name: editForm.name,
         email: editForm.email,
         phone: editForm.phone,
@@ -197,7 +197,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
 
     setIsLoading(true);
     try {
-      await supabaseService.deleteHost(host.uid);
+     await supabaseService.deleteHost(host.id);
     } catch (error: any) {
       console.error('Delete host error:', error);
       alert(error.message || 'Failed to delete host');
@@ -214,7 +214,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
 
     setIsLoading(true);
     try {
-    await supabaseService.changeHostPassword(selectedHost.uid, newPassword);
+   await supabaseService.changeHostPassword(selectedHost.id, newPassword);
       
       setShowPasswordDialog(false);
       setSelectedHost(null);
@@ -231,7 +231,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
   const handleExtendSubscription = async (host: HostUser, additionalMonths: number) => {
     setIsLoading(true);
     try {
-     await supabaseService.extendHostSubscription(host.uid, additionalMonths);
+     await supabaseService.extendHostSubscription(host.id, additionalMonths);
     } catch (error: any) {
       console.error('Extend subscription error:', error);
       alert(error.message || 'Failed to extend subscription');
@@ -243,7 +243,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
   const handleToggleStatus = async (host: HostUser) => {
     setIsLoading(true);
     try {
-      await supabaseService.toggleHostStatus(host.uid, !host.isActive);
+      await supabaseService.toggleHostStatus(host.id, !host.isActive);
     } catch (error: any) {
       console.error('Toggle status error:', error);
       alert(error.message || 'Failed to update status');
@@ -393,7 +393,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
                     {hosts.map((host) => {
                       const subscription = getSubscriptionStatus(host);
                       return (
-                        <tr key={host.uid} className="border-b hover:bg-gray-50">
+                      <tr key={host.id} className="border-b hover:bg-gray-50">
                           <td className="p-3">
                             <div className="flex items-center space-x-3">
                               <div className="bg-blue-100 p-2 rounded-full">
