@@ -552,7 +552,68 @@ async getUserData(): Promise<User | null> {
   /**
    * Get user data using session user (avoids extra API call)
    */
- console.log('🔍 getUserDataFromSession: Starting for user:', sessionUser.id);
+  async getUserDataFromSession(sessionUser: any): Promise<User | null> {
+    try {
+      console.log('🔍 getUserDataFromSession: Starting for user:', sessionUser.id);
+      
+      // Use the session user ID directly instead of calling getUser() again
+      const userId = sessionUser.id;
+      console.log('🔍 getUserDataFromSession: About to query admins table...');
+      
+      // Try to get admin data first
+      const { data: adminData, error: adminError } = await supabase
+        .from('admins')
+        .select('*')
+        .eq('id', userId)
+        .single();
+      
+      console.log('🔍 getUserDataFromSession: Admin query completed:', { adminData, adminError });
+
+      if (adminError && adminError.code !== 'PGRST116') {
+        console.error('Error querying admin table:', adminError);
+        throw new Error(`Database error: ${adminError.message}`);
+      }
+
+      if (adminData) {
+        console.log('✅ Found admin record from session');
+        return {
+          ...adminData,
+          role: 'admin'
+        } as AdminUser;
+      }
+
+      console.log('🔍 getUserDataFromSession: About to query hosts table...');
+
+      // Try to get host data
+      const { data: hostData, error: hostError } = await supabase
+        .from('hosts')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      console.log('🔍 getUserDataFromSession: Host query completed:', { hostData, hostError });
+
+      if (hostError && hostError.code !== 'PGRST116') {
+        console.error('Error querying host table:', hostError);
+        throw new Error(`Database error: ${hostError.message}`);
+      }
+
+      if (hostData) {
+        console.log('✅ Found host record from session');
+        return {
+          ...hostData,
+          role: 'host'
+        } as HostUser;
+      }
+
+      console.warn('User authenticated but no admin/host record found in session lookup');
+      return null;
+
+    } catch (error: any) {
+      console.error('Error getting user data from session:', error);
+      return null;
+    }
+  }
       
       // Use the session user ID directly instead of calling getUser() again
       const userId = sessionUser.id;
