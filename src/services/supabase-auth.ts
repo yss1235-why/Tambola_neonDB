@@ -611,5 +611,7 @@ async getUserDataFromSession(sessionUser: any): Promise<User | null> {
     return null;
   }
 }
+}
+
 // Export singleton instance
 export const supabaseAuth = new SupabaseAuthService();
