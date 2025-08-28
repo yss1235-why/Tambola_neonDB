@@ -1,6 +1,7 @@
 // Supabase Authentication Service
 // Replaces Firebase Auth functionality
-
+import { supabaseAuth } from './supabase-auth';
+import { supabaseGame } from './supabase-game';
 import { supabase } from './supabase';
 import { createApiResponse, formatError } from './supabase';
 import type { 
