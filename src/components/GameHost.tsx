@@ -438,7 +438,7 @@ const [gameCreationError, setGameCreationError] = useState<string | null>(null);
         );
         
         // Update host template separately (expansion method doesn't handle template)
-        await supabaseService.updateHostTemplate(user.uid, {
+        await supabaseService.updateHostTemplate(user.id, {
           hostPhone: createGameForm.hostPhone.trim(),
           maxTickets: newMaxTickets,
           selectedTicketSet: createGameForm.selectedTicketSet,
@@ -453,7 +453,7 @@ const [gameCreationError, setGameCreationError] = useState<string | null>(null);
         
         await supabaseService.updateGameAndTemplate(
           gameData.gameId,
-          user.uid,
+          user.id,
           updateData
         );
       }
@@ -559,7 +559,7 @@ if (cachedWinnerData) {
 }
       
       // Save host template settings
-     await supabaseService.saveHostSettings(user.uid, {
+     await supabaseService.saveHostSettings(user.id, {
         hostPhone: createGameForm.hostPhone,
         maxTickets: maxTicketsNum,
         selectedTicketSet: createGameForm.selectedTicketSet,
@@ -575,7 +575,7 @@ if (cachedWinnerData) {
 
      const newGame = await supabaseService.createGame(
         gameConfig,
-        user.uid,
+        user.id,
         createGameForm.selectedTicketSet,
         createGameForm.selectedPrizes
       );
@@ -671,7 +671,7 @@ if (cachedWinnerData) {
     const loadPreviousSettings = async () => {
       try {
         console.log('🔧 Loading previous host settings...');
-        const settings = await supabaseService.getHostSettings(user.uid);
+        const settings = await supabaseService.getHostSettings(user.id);
         if (settings) {
           console.log('✅ Previous settings loaded');
           setCreateGameForm(prev => ({
@@ -688,7 +688,7 @@ if (cachedWinnerData) {
     };
 
     loadPreviousSettings();
-  }, [user.uid]);
+  }, [user.id]);
 
   // Handle game completion and winner display
   useEffect(() => {
@@ -884,7 +884,7 @@ if (cachedWinnerData) {
         {currentView === 'booking' && gameData && !editMode && (
           <div className="space-y-6">
 
-            <HostControlsProvider userId={user.uid}>
+            <HostControlsProvider userId={user.id}>
               <HostDisplay />
             </HostControlsProvider>
             
@@ -916,7 +916,7 @@ if (cachedWinnerData) {
 {currentView === 'live' && gameData && (
   <div className="space-y-4">
    
-    <HostControlsProvider userId={user.uid}>
+    <HostControlsProvider userId={user.id}>
       <HostDisplay onCreateNewGame={createNewGame} />
      <AudioManagerForHost
         currentNumber={gameData.gameState.currentNumber}
