@@ -142,7 +142,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
         createForm.password,
         createForm.name,
         createForm.phone,
-        user.id,
+        admin.id,
         createForm.subscriptionMonths
       );
 
