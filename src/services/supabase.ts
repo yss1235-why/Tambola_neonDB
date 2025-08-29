@@ -9,11 +9,17 @@ import { supabaseGame } from './supabase-game';
 // Initialize Supabase client
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabaseServiceKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing Supabase environment variables. Please check your .env file.');
 }
 
+if (!supabaseServiceKey) {
+  console.warn('⚠️  VITE_SUPABASE_SERVICE_ROLE_KEY is missing. Admin operations (create/delete users) will fail.');
+}
+
+// Regular client for normal operations
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
@@ -26,6 +32,14 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
     }
   }
 });
+
+// Admin client for admin operations (createUser, deleteUser, etc.)
+export const supabaseAdmin = supabaseServiceKey ? createClient<Database>(supabaseUrl, supabaseServiceKey, {
+  auth: {
+    autoRefreshToken: false,
+    persistSession: false,
+  }
+}) : null;
 
 // Re-export types for convenience
 export type {
