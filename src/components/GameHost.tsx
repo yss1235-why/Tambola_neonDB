@@ -213,8 +213,20 @@ const AudioManagerForPlayer: React.FC<{
     />
   );
 };
-export const GameHost: React.FC<GameHostProps> = ({ user }) => {
+  export const GameHost: React.FC<GameHostProps> = ({ user }) => {
   const { gameData, currentPhase, isLoading, error } = useGameData();
+  
+  // Early return if user data not loaded yet
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading user data...</p>
+        </div>
+      </div>
+    );
+  }
  const bookedCount = gameData ? Object.values(gameData.tickets || {}).filter(t => t.isBooked).length : 0;
   
   // ================== SAFETY AND VALIDATION UTILITIES ==================
@@ -345,12 +357,18 @@ const [gameCreationError, setGameCreationError] = useState<string | null>(null);
 
   // ================== SUBSCRIPTION VALIDATION ==================
   
- const isSubscriptionValid = React.useCallback(() => {
+const isSubscriptionValid = React.useCallback(() => {
+  if (!user?.subscription_end_date || !user?.isActive) return false;
   const now = new Date();
   const endDate = new Date(user.subscription_end_date);
   return endDate > now && user.isActive;
-}, [user.subscription_end_date, user.isActive]);
- const getSubscriptionStatus = React.useCallback(() => {
+}, [user?.subscription_end_date, user?.isActive]);
+
+const getSubscriptionStatus = React.useCallback(() => {
+  if (!user?.subscription_end_date) {
+    return { message: 'Loading...', variant: 'secondary' as const };
+  }
+  
   const now = new Date();
   const endDate = new Date(user.subscription_end_date);
   const daysLeft = Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
@@ -368,7 +386,7 @@ const [gameCreationError, setGameCreationError] = useState<string | null>(null);
     }
     
     return { message: `Active until ${endDate.toLocaleDateString()}`, variant: 'default' as const };
-  }, [user.subscription_end_date, user.isActive]);
+ }, [user?.subscription_end_date, user?.isActive]);
 
   // ================== ENHANCED SINGLE SOURCE UPDATE + EXPANSION ==================
 
