@@ -1,6 +1,6 @@
 // Supabase Authentication Service
 // Replaces Firebase Auth functionality
-import { supabase } from './supabase';
+import { supabase, supabaseAdmin } from './supabase';
 import type { 
   AdminUser, 
   HostUser, 
@@ -242,7 +242,11 @@ async getUserData(): Promise<User | null> {
       console.log(`🔄 Creating host account: ${email}`);
 
       // Create auth user (this will generate the UUID)
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+     if (!supabaseAdmin) {
+        throw new Error('Admin client not available. Please check VITE_SUPABASE_SERVICE_ROLE_KEY');
+      }
+
+      const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
         email,
         password,
         email_confirm: true, // Auto-confirm email
@@ -276,7 +280,9 @@ async getUserData(): Promise<User | null> {
 
       if (dbError) {
         // Clean up auth user if database insert fails
-        await supabase.auth.admin.deleteUser(hostId);
+       if (supabaseAdmin) {
+          await supabaseAdmin.auth.admin.deleteUser(hostId);
+        }
         throw new Error(dbError.message);
       }
 
@@ -350,13 +356,16 @@ async getUserData(): Promise<User | null> {
         throw dbError;
       }
 
+    
       // Delete auth user
-      const { error: authError } = await supabase.auth.admin.deleteUser(hostId);
-
-      if (authError) {
-        console.warn('Database record deleted but auth deletion failed:', authError);
+      if (supabaseAdmin) {
+        const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(hostId);
+        if (authError) {
+          console.warn('Database record deleted but auth deletion failed:', authError);
+        }
+      } else {
+        console.warn('Admin client not available - cannot delete auth user');
       }
-
       console.log(`✅ Host ${hostId} deleted successfully`);
 
     } catch (error: any) {
