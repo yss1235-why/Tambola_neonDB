@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useAuth } from '@/hooks/useAuth';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   Users, 
@@ -137,12 +138,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
 
     setIsLoading(true);
     try {
-     await supabaseService.createHost(
+    await supabaseService.createHost(
         createForm.email,
         createForm.password,
         createForm.name,
         createForm.phone,
-        admin.id,
+        user.id,
         createForm.subscriptionMonths
       );
 
