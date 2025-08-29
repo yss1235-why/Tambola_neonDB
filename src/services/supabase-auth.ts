@@ -559,19 +559,29 @@ async getUserData(): Promise<User | null> {
  * Get user data using session user (avoids extra API call)
  */
 async getUserDataFromSession(sessionUser: any): Promise<User | null> {
+  const timeoutPromise = new Promise((_, reject) => {
+    setTimeout(() => reject(new Error('Admin query timeout after 10 seconds')), 10000);
+  });
+  
   try {
     console.log('🔍 getUserDataFromSession: Starting for user:', sessionUser.id);
     
     // Use the session user ID directly instead of calling getUser() again
     const userId = sessionUser.id;
     console.log('🔍 getUserDataFromSession: About to query admins table...');
+    console.log('🔍 Starting admin query for userId:', userId);
     
-    // Try to get admin data first
-    const { data: adminData, error: adminError } = await supabase
+    // Try to get admin data first with timeout
+    const adminQueryPromise = supabase
       .from('admins')
       .select('*')
       .eq('id', userId)
       .single();
+
+    const { data: adminData, error: adminError } = await Promise.race([
+      adminQueryPromise,
+      timeoutPromise
+    ]) as any;
     
     console.log('🔍 getUserDataFromSession: Admin query completed:', { adminData, adminError });
 
@@ -590,12 +600,17 @@ async getUserDataFromSession(sessionUser: any): Promise<User | null> {
 
     console.log('🔍 getUserDataFromSession: About to query hosts table...');
 
-    // Try to get host data
-    const { data: hostData, error: hostError } = await supabase
+    // Try to get host data with timeout too
+    const hostQueryPromise = supabase
       .from('hosts')
       .select('*')
       .eq('id', userId)
       .single();
+
+    const { data: hostData, error: hostError } = await Promise.race([
+      hostQueryPromise,
+      timeoutPromise
+    ]) as any;
 
     console.log('🔍 getUserDataFromSession: Host query completed:', { hostData, hostError });
 
