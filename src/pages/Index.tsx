@@ -153,13 +153,13 @@ const handleClearError = useCallback(() => {
 
           {/* Host Dashboard */}
           {userRole === 'host' && (
-            <GameDataProvider userId={currentUser.id}>
-              <GameHost 
-                host={currentUser as HostUser}
-                onGameSelect={setSelectedGameId}
-              />
-            </GameDataProvider>
-          )}
+              <GameDataProvider userId={currentUser.id}>
+                <GameHost 
+                  user={currentUser as HostUser}
+                  userRole="host"
+                />
+              </GameDataProvider>
+            )}
         </main>
       </>
     );
