@@ -17,7 +17,7 @@ const Index = () => {
   // ==================== SIMPLIFIED AUTH STATE ====================
   
   const auth = useAuth();
-  const { user: currentUser, userRole, loading: authLoading, error: authError } = auth;
+  const { user: currentUser, userRole, loading: authLoading, error: authError, initialized: authInitialized } = auth;
 
   // ==================== SIMPLIFIED GAMES LOADING ====================
   
@@ -34,27 +34,60 @@ const Index = () => {
 
   // ==================== SIMPLE LOGIN HANDLERS ====================
 
-  const handleUserLogin = useCallback(async (
-    type: 'admin' | 'host', 
-    email: string, 
-    password: string
-  ) => {
-    try {
-      console.log(`🔐 ${type} login attempt:`, email);
-      
-      if (type === 'admin') {
-        await auth.loginAdmin(email, password);
-      } else {
-        await auth.loginHost(email, password);
-      }
-      
-      console.log(`✅ ${type} login successful`);
-      
-    } catch (error: any) {
-      console.error(`❌ ${type} login failed:`, error);
-      throw error; // Let UI components handle the error display
+ // ==================== MISSING HANDLER - ADD THIS ====================
+
+const handleRequestLogin = useCallback(async () => {
+  console.log('🔐 Auth initialization requested...');
+  // Since Supabase auth is always initialized, this is just for compatibility
+  await auth.initializeAuth();
+  return Promise.resolve();
+}, [auth]);
+
+// ==================== SIMPLE LOGIN HANDLERS ====================
+
+const handleUserLogin = useCallback(async (
+  type: 'admin' | 'host', 
+  email: string, 
+  password: string
+): Promise<boolean> => { // <-- Add return type boolean
+  try {
+    console.log(`🔐 ${type} login attempt:`, email);
+    
+    if (type === 'admin') {
+      await auth.loginAdmin(email, password);
+    } else {
+      await auth.loginHost(email, password);
     }
-  }, [auth]);
+    
+    console.log(`✅ ${type} login successful`);
+    return true; // <-- Return success
+    
+  } catch (error: any) {
+    console.error(`❌ ${type} login failed:`, error);
+    throw error; // Let UI components handle the error display
+  }
+}, [auth]);
+
+// ==================== LOGOUT HANDLER ====================
+
+const handleUserLogout = useCallback(async (): Promise<boolean> => {
+  try {
+    console.log('🔐 Logout requested...');
+    await auth.logout();
+    console.log('✅ Logout successful');
+    return true;
+  } catch (error: any) {
+    console.error('❌ Logout failed:', error);
+    return false;
+  }
+}, [auth]);
+
+// ==================== CLEAR ERROR HANDLER ====================
+
+const handleClearError = useCallback(() => {
+  console.log('🧹 Clearing auth error');
+  auth.clearError();
+}, [auth]);
 
   // ==================== GESTURE DETECTION ====================
 
@@ -94,9 +127,19 @@ const Index = () => {
   // ==================== RENDER AUTHENTICATED VIEWS ====================
 
   if (currentUser) {
-    return (
-      <>
-        <Header />
+  return (
+    <>
+      <Header
+        currentUser={currentUser}
+        userRole={userRole}
+        authLoading={authLoading}
+        authError={authError}
+        authInitialized={authInitialized}
+        onRequestLogin={handleRequestLogin}
+        onUserLogin={handleUserLogin}
+        onUserLogout={handleUserLogout}
+        onClearError={handleClearError}
+      />
         
         <main className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 pt-16">
           {/* Admin Dashboard */}
@@ -124,9 +167,21 @@ const Index = () => {
 
   // ==================== RENDER GUEST VIEW ====================
 
-  return (
-    <>
-      <Header onUserLogin={handleUserLogin} />
+return (
+  <>
+    <Header
+      currentUser={currentUser}
+      userRole={userRole}
+      authLoading={authLoading}
+      authError={authError}
+      authInitialized={authInitialized}
+      onRequestLogin={handleRequestLogin}
+      onUserLogin={handleUserLogin}
+      onUserLogout={handleUserLogout}
+      onClearError={handleClearError}
+      forceShowAdminLogin={showAdminLoginViaGesture}
+      onAdminLoginClose={handleCloseGestureLogin}
+    />
       
       <main className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 pt-16">
         {selectedGameId ? (
@@ -156,138 +211,12 @@ const Index = () => {
           enabled={!currentUser}
         />
         
-        {/* Admin Login Modal (via gesture) */}
-        {showAdminLoginViaGesture && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">
-                Admin Access
-              </h2>
-              <AdminLoginForm
-                onLogin={(email, password) => handleUserLogin('admin', email, password)}
-                onClose={handleCloseGestureLogin}
-              />
-            </div>
-          </div>
-        )}
+       {/* Admin login is now handled by Header component */}
       </main>
     </>
   );
 };
 
-// ==================== ADMIN LOGIN FORM COMPONENT ====================
 
-interface AdminLoginFormProps {
-  onLogin: (email: string, password: string) => Promise<void>;
-  onClose: () => void;
-}
-
-const AdminLoginForm: React.FC<AdminLoginFormProps> = ({ onLogin, onClose }) => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!email || !password) {
-      setError('Please fill in all fields');
-      return;
-    }
-
-    setLoading(true);
-    setError('');
-    
-    try {
-      await onLogin(email, password);
-      onClose(); // Close modal on success
-    } catch (error: any) {
-      setError(error.message || 'Login failed');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-          Email
-        </label>
-        <input
-          id="email"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500"
-          disabled={loading}
-          autoFocus
-        />
-      </div>
-      
-      <div>
-        <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-          Password
-        </label>
-        <input
-          id="password"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500"
-          disabled={loading}
-        />
-      </div>
-      
-      {error && (
-        <div className="text-red-600 text-sm">{error}</div>
-      )}
-      
-      <div className="flex space-x-3">
-        <button
-          type="submit"
-          disabled={loading}
-          className="flex-1 bg-orange-600 text-white py-2 px-4 rounded-md hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {loading ? 'Signing in...' : 'Sign In'}
-        </button>
-        
-        <button
-          type="button"
-          onClick={onClose}
-          disabled={loading}
-          className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          Cancel
-        </button>
-      </div>
-    </form>
-  );
-};
 
 export default Index;
-
-/**
- * 🎉 IMPROVEMENTS OVER FIREBASE VERSION:
- * 
- * ✅ SIMPLER STATE MANAGEMENT:
- * - No complex lazy auth initialization
- * - No race conditions between auth and data loading
- * - Straightforward error handling
- * 
- * ✅ CLEANER DATA FLOW:
- * - Direct subscription hooks
- * - No subscription deduplication needed
- * - Automatic cleanup
- * 
- * ✅ BETTER PERFORMANCE:
- * - Fewer re-renders due to simpler state
- * - No redundant API calls
- * - Optimized real-time subscriptions
- * 
- * ✅ EASIER MAINTENANCE:
- * - Clear separation of concerns
- * - Predictable component lifecycle
- * - Simplified debugging
- */
