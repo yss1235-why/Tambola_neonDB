@@ -345,16 +345,15 @@ const [gameCreationError, setGameCreationError] = useState<string | null>(null);
 
   // ================== SUBSCRIPTION VALIDATION ==================
   
-  const isSubscriptionValid = React.useCallback(() => {
-    const now = new Date();
-    const endDate = new Date(user.subscriptionEndDate);
-    return endDate > now && user.isActive;
-  }, [user.subscriptionEndDate, user.isActive]);
-
-  const getSubscriptionStatus = React.useCallback(() => {
-    const now = new Date();
-    const endDate = new Date(user.subscriptionEndDate);
-    const daysLeft = Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+ const isSubscriptionValid = React.useCallback(() => {
+  const now = new Date();
+  const endDate = new Date(user.subscription_end_date);
+  return endDate > now && user.isActive;
+}, [user.subscription_end_date, user.isActive]);
+ const getSubscriptionStatus = React.useCallback(() => {
+  const now = new Date();
+  const endDate = new Date(user.subscription_end_date);
+  const daysLeft = Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
     
     if (!user.isActive) {
       return { message: 'Account is inactive', variant: 'destructive' as const };
@@ -369,7 +368,7 @@ const [gameCreationError, setGameCreationError] = useState<string | null>(null);
     }
     
     return { message: `Active until ${endDate.toLocaleDateString()}`, variant: 'default' as const };
-  }, [user.subscriptionEndDate, user.isActive]);
+  }, [user.subscription_end_date, user.isActive]);
 
   // ================== ENHANCED SINGLE SOURCE UPDATE + EXPANSION ==================
 
