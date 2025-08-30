@@ -586,30 +586,15 @@ async getUserDataFromSession(sessionUser: any): Promise<User | null> {
           role: 'admin'
         } as AdminUser;
       }
-    } else if (userRole === 'host') {
-     console.log('🔍 Checking host table for host user...');
+} else if (userRole === 'host') {
+      console.log('🔍 Checking host table for host user...');
       
-      // Debug auth context
-      const { data: { user: currentAuthUser } } = await supabase.auth.getUser();
-      console.log('🔍 Debug - sessionUser.id:', userId);
-      console.log('🔍 Debug - auth.getUser().id:', currentAuthUser?.id);
-      console.log('🔍 Debug - auth context match:', userId === currentAuthUser?.id);
-      
-      // Add timeout to prevent hanging queries
-      const queryPromise = supabase
+      // Direct query without timeout or extra auth calls
+      const { data: hostData, error: hostError } = await supabase
         .from('hosts')
         .select('*')
         .eq('id', userId)
         .single();
-
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Host query timeout after 5 seconds')), 5000);
-      });
-
-      const { data: hostData, error: hostError } = await Promise.race([
-        queryPromise,
-        timeoutPromise
-      ]) as any;
 
       if (hostError && hostError.code !== 'PGRST116') {
         console.error('Error querying host table:', hostError);
