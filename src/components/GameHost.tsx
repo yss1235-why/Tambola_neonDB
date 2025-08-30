@@ -358,11 +358,36 @@ const [gameCreationError, setGameCreationError] = useState<string | null>(null);
   // ================== SUBSCRIPTION VALIDATION ==================
   
 const isSubscriptionValid = React.useCallback(() => {
-  if (!user?.subscription_end_date || !user?.isActive) return false;
+  console.log('DEBUG Subscription Check:', {
+    hasUser: !!user,
+    subscription_end_date: user?.subscription_end_date,
+    is_active: user?.is_active,
+    rawUser: user
+  });
+
+  if (!user?.subscription_end_date) {
+    console.log('DEBUG: No subscription_end_date');
+    return false;
+  }
+
+  if (user?.is_active === false) {
+    console.log('DEBUG: User not active');
+    return false;
+  }
+
   const now = new Date();
   const endDate = new Date(user.subscription_end_date);
-  return endDate > now && user.isActive;
-}, [user?.subscription_end_date, user?.isActive]);
+  
+  console.log('DEBUG Date comparison:', {
+    now: now.toISOString(),
+    endDate: endDate.toISOString(),
+    endDateValid: !isNaN(endDate.getTime()),
+    isExpired: endDate <= now,
+    isActive: user.is_active
+  });
+
+  return !isNaN(endDate.getTime()) && endDate > now && user.is_active;
+}, [user?.subscription_end_date, user?.is_active]);
 
 const getSubscriptionStatus = React.useCallback(() => {
   if (!user?.subscription_end_date) {
@@ -373,23 +398,22 @@ const getSubscriptionStatus = React.useCallback(() => {
   const endDate = new Date(user.subscription_end_date);
   const daysLeft = Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
     
-    if (!user.isActive) {
-      return { message: 'Account is inactive', variant: 'destructive' as const };
-    }
-    
-    if (daysLeft <= 0) {
-      return { message: 'Subscription expired', variant: 'destructive' as const };
-    }
-    
-    if (daysLeft <= 7) {
-      return { message: `${daysLeft} days left`, variant: 'secondary' as const };
-    }
-    
-    return { message: `Active until ${endDate.toLocaleDateString()}`, variant: 'default' as const };
- }, [user?.subscription_end_date, user?.isActive]);
+  if (!user.is_active) {
+    return { message: 'Account is inactive', variant: 'destructive' as const };
+  }
+  
+  if (daysLeft <= 0) {
+    return { message: 'Subscription expired', variant: 'destructive' as const };
+  }
+  
+  if (daysLeft <= 7) {
+    return { message: `${daysLeft} days left`, variant: 'secondary' as const };
+  }
+  
+  return { message: `Active until ${endDate.toLocaleDateString()}`, variant: 'default' as const };
+}, [user?.subscription_end_date, user?.is_active]);
 
   // ================== ENHANCED SINGLE SOURCE UPDATE + EXPANSION ==================
-
   /**
    * ✅ ENHANCED SINGLE SOURCE UPDATE: Complete settings update with safety checks + NEW EXPANSION LOGIC
    * CRITICAL: This updates BOTH live game data AND host template + handles ticket expansion
