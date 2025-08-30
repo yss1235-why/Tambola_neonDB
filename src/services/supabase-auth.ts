@@ -562,60 +562,82 @@ async getUserDataFromSession(sessionUser: any): Promise<User | null> {
   try {
     console.log('🔍 getUserDataFromSession: Starting for user:', sessionUser.id);
     
-    // Use the session user ID directly instead of calling getUser() again
     const userId = sessionUser.id;
-    console.log('🔍 getUserDataFromSession: About to query admins table...');
-    console.log('🔍 Starting admin query for userId:', userId);
+    const userRole = sessionUser.user_metadata?.role || sessionUser.app_metadata?.role;
     
-    // Try to get admin data first (NO TIMEOUT RACE)
-    const { data: adminData, error: adminError } = await supabase
-      .from('admins')
-      .select('*')
-      .eq('id', userId)
-      .single();
-    
-    
-    
-    console.log('🔍 getUserDataFromSession: Admin query completed:', { adminData, adminError });
+    console.log('🔍 User role from metadata:', userRole);
 
-    if (adminError && adminError.code !== 'PGRST116') {
-      console.error('Error querying admin table:', adminError);
-      throw new Error(`Database error: ${adminError.message}`);
+    // Check the appropriate table based on stored role
+    if (userRole === 'admin') {
+      console.log('🔍 Checking admin table for admin user...');
+      
+      const { data: adminData, error: adminError } = await supabase
+        .from('admins')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (adminError && adminError.code !== 'PGRST116') {
+        console.error('Error querying admin table:', adminError);
+        throw new Error(`Database error: ${adminError.message}`);
+      }
+
+      if (adminData) {
+        console.log('✅ Found admin record');
+        return {
+          ...adminData,
+          role: 'admin'
+        } as AdminUser;
+      }
+    } else if (userRole === 'host') {
+      console.log('🔍 Checking host table for host user...');
+      
+      const { data: hostData, error: hostError } = await supabase
+        .from('hosts')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (hostError && hostError.code !== 'PGRST116') {
+        console.error('Error querying host table:', hostError);
+        throw new Error(`Database error: ${hostError.message}`);
+      }
+
+      if (hostData) {
+        console.log('✅ Found host record');
+        return {
+          ...hostData,
+          role: 'host'
+        } as HostUser;
+      }
+    } else {
+      // Fallback: if no role metadata, check both tables (but log the issue)
+      console.warn('⚠️ No role metadata found, checking both tables...');
+      
+      // Check admin first
+      const { data: adminData, error: adminError } = await supabase
+        .from('admins')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+     if (adminData) {
+  return { ...adminData, role: 'admin' } as AdminUser;
+}
+
+// Check host
+const { data: hostData, error: hostError } = await supabase
+  .from('hosts')
+  .select('*')
+  .eq('id', userId)
+  .single();
+
+if (hostData) {
+  return { ...hostData, role: 'host' } as HostUser;
+}
     }
 
-    if (adminData) {
-      console.log('✅ Found admin record from session');
-      return {
-        ...adminData,
-        role: 'admin'
-      } as AdminUser;
-    }
-
-   console.log('🔍 getUserDataFromSession: About to query hosts table...');
-
-    // Try to get host data (NO TIMEOUT RACE)
-    const { data: hostData, error: hostError } = await supabase
-      .from('hosts')
-      .select('*')
-      .eq('id', userId)
-      .single();
-
-    console.log('🔍 getUserDataFromSession: Host query completed:', { hostData, hostError });
-
-    if (hostError && hostError.code !== 'PGRST116') {
-      console.error('Error querying host table:', hostError);
-      throw new Error(`Database error: ${hostError.message}`);
-    }
-
-    if (hostData) {
-      console.log('✅ Found host record from session');
-      return {
-        ...hostData,
-        role: 'host'
-      } as HostUser;
-    }
-
-    console.warn('User authenticated but no admin/host record found in session lookup');
+    console.warn('User authenticated but no matching record found');
     return null;
 
   } catch (error: any) {
