@@ -1,5 +1,4 @@
 // Supabase Authentication Hook
-// Replaces Firebase useAuth.ts - MUCH SIMPLER!
 
 import { useState, useEffect, useCallback } from 'react';
 import { supabaseAuth } from '@/services/supabase-auth';
@@ -107,11 +106,11 @@ export const useAuth = (): AuthState & AuthActions => {
     );
 
     return () => {
-      isMounted = false;
-      clearTimeout(loadingTimeout);
-      subscription.unsubscribe();
-      console.log('🧹 Auth cleanup completed');
-    };
+        isMounted = false;
+        // Timeout safety code removed - no timeout to clear
+        subscription.unsubscribe();
+        console.log('🧹 Auth cleanup completed');
+      };
   }, []);
 
   // ==================== LOGIN METHODS ====================
