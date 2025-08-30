@@ -242,11 +242,8 @@ async getUserData(): Promise<User | null> {
       console.log(`🔄 Creating host account: ${email}`);
 
       // Create auth user (this will generate the UUID)
-     if (!supabaseAdmin) {
-        throw new Error('Admin client not available. Please check VITE_SUPABASE_SERVICE_ROLE_KEY');
-      }
-
-      const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+    const adminClient = createAdminClient();
+      const { data: authData, error: authError } = await adminClient.auth.admin.createUser({
         email,
         password,
         email_confirm: true, // Auto-confirm email
