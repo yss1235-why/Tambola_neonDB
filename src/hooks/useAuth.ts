@@ -106,23 +106,6 @@ export const useAuth = (): AuthState & AuthActions => {
       }
     );
 
-    // Set timeout to prevent hanging in loading state
-    const loadingTimeout = setTimeout(() => {
-      if (isMounted) {
-        setState(prev => {
-          if (prev.loading && !prev.initialized) {
-            console.warn('⚠️ Auth loading timeout reached');
-            return {
-              ...prev,
-              loading: false,
-              initialized: true
-            };
-          }
-          return prev;
-        });
-      }
-    }, 3000);
-
     return () => {
       isMounted = false;
       clearTimeout(loadingTimeout);
