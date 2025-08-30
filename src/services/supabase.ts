@@ -1,5 +1,4 @@
 // Main Supabase Service
-// Replaces src/services/firebase.ts
 
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './supabase-types';
@@ -38,6 +37,12 @@ export const supabaseAdmin = supabaseServiceKey ? createClient<Database>(supabas
   auth: {
     autoRefreshToken: false,
     persistSession: false,
+    storageKey: 'supabase-admin-auth', // Use different storage key to avoid conflicts
+    storage: {
+      getItem: () => null, // Don't persist admin sessions
+      setItem: () => {},
+      removeItem: () => {}
+    }
   }
 }) : null;
 
