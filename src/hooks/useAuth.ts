@@ -43,10 +43,55 @@ export const useAuth = (): AuthState & AuthActions => {
 
   // ==================== INITIALIZE AUTH STATE ====================
 
-  useEffect(() => {
+useEffect(() => {
     console.log('🔐 Initializing Supabase auth system...');
 
     let isMounted = true;
+
+    // First, check if there's an existing session
+    const initializeAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session?.user && isMounted) {
+          console.log('🔐 Found existing session, loading user data...');
+          const userData = await supabaseAuth.getUserDataFromSession(session.user);
+          const role = userData?.role || null;
+
+          if (userData && role) {
+            setState({
+              user: userData,
+              userRole: role as 'admin' | 'host',
+              loading: false,
+              initialized: true,
+              error: null
+            });
+            console.log('✅ Existing session restored:', userData.email);
+          }
+        } else if (isMounted) {
+          setState({
+            user: null,
+            userRole: null,
+            loading: false,
+            initialized: true,
+            error: null
+          });
+        }
+      } catch (error) {
+        console.error('❌ Error initializing auth:', error);
+        if (isMounted) {
+          setState({
+            user: null,
+            userRole: null,
+            loading: false,
+            initialized: true,
+            error: 'Failed to initialize authentication'
+          });
+        }
+      }
+    };
+
+    initializeAuth();
 
     // Listen to auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -55,10 +100,15 @@ export const useAuth = (): AuthState & AuthActions => {
 
         if (!isMounted) return;
 
-        if (event === 'SIGNED_IN' && session?.user) {
+       if (event === 'SIGNED_IN' && session?.user) {
           try {
             console.log('🔐 User signed in, loading profile...');
             
+            // Wait a bit for auth to stabilize after sign in
+            if (event === 'SIGNED_IN') {
+              await new Promise(resolve => setTimeout(resolve, 500));
+            }
+      
             // Use session user directly instead of making another API call
             const userData = await supabaseAuth.getUserDataFromSession(session.user);
             const role = userData?.role || null;
