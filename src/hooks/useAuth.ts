@@ -121,7 +121,7 @@ export const useAuth = (): AuthState & AuthActions => {
           return prev;
         });
       }
-    }, 5000);
+    }, 3000);
 
     return () => {
       isMounted = false;
