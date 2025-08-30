@@ -1,5 +1,5 @@
 // Supabase Game Service
-// Replaces Firebase Game Logic - MUCH SIMPLER, NO RACE CONDITIONS!
+
 
 import { supabase } from './supabase';
 import type { 
@@ -22,9 +22,15 @@ class SupabaseGameService {
   /**
    * Create new game
    */
-  async createGame(config: CreateGameConfig): Promise<GameData> {
+ async createGame(config: CreateGameConfig): Promise<GameData> {
     try {
       console.log('🎮 Creating new game:', config.name);
+      
+      // Ensure we have a valid session before creating game
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('User authentication required. Please login again.');
+      }
 
       // Create game record
       const { data: gameData, error } = await supabase
