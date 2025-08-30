@@ -592,6 +592,12 @@ async getUserDataFromSession(sessionUser: any): Promise<User | null> {
     } else if (userRole === 'host') {
      console.log('🔍 Checking host table for host user...');
       
+      // Debug auth context
+      const { data: { user: currentAuthUser } } = await supabase.auth.getUser();
+      console.log('🔍 Debug - sessionUser.id:', userId);
+      console.log('🔍 Debug - auth.getUser().id:', currentAuthUser?.id);
+      console.log('🔍 Debug - auth context match:', userId === currentAuthUser?.id);
+      
       // Add timeout to prevent hanging queries
       const queryPromise = supabase
         .from('hosts')
