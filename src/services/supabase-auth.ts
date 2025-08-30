@@ -1,5 +1,4 @@
 // Supabase Authentication Service
-// Replaces Firebase Auth functionality
 import { supabase, supabaseAdmin } from './supabase';
 import type { 
   AdminUser, 
@@ -609,30 +608,9 @@ async getUserDataFromSession(sessionUser: any): Promise<User | null> {
         } as HostUser;
       }
     } else {
-      // Fallback: if no role metadata, check both tables (but log the issue)
-      console.warn('⚠️ No role metadata found, checking both tables...');
-      
-      // Check admin first
-      const { data: adminData, error: adminError } = await supabase
-        .from('admins')
-        .select('*')
-        .eq('id', userId)
-        .single();
-
-     if (adminData) {
-  return { ...adminData, role: 'admin' } as AdminUser;
-}
-
-// Check host
-const { data: hostData, error: hostError } = await supabase
-  .from('hosts')
-  .select('*')
-  .eq('id', userId)
-  .single();
-
-if (hostData) {
-  return { ...hostData, role: 'host' } as HostUser;
-}
+      // No role metadata found - return null and force re-login
+      console.warn('⚠️ No role metadata found for user. User needs to login again.');
+      return null;
     }
 
     console.warn('User authenticated but no matching record found');
