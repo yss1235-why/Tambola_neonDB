@@ -254,7 +254,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
   };
 
   const openEditDialog = (host: HostUser) => {
-    const subscriptionEnd = new Date(host.subscriptionEndDate);
+    const subscriptionEnd = new Date(host.subscription_end_date);
     const now = new Date();
     const monthsLeft = Math.max(0, Math.ceil((subscriptionEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24 * 30)));
 
@@ -276,7 +276,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
   };
 
   const getSubscriptionStatus = useCallback((host: HostUser) => {
-    const subscriptionEnd = new Date(host.subscriptionEndDate);
+    const subscriptionEnd = new Date(host.subscription_end_date);
     const now = new Date();
     const daysLeft = Math.ceil((subscriptionEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 
