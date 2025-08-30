@@ -33,24 +33,23 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
 });
 
 // Admin client for admin operations (createUser, deleteUser, etc.)
-// Use different URL to completely isolate the client
-export const supabaseAdmin = supabaseServiceKey ? createClient<Database>(
-  supabaseUrl, 
-  supabaseServiceKey,
-  {
+// Create ONLY when needed to avoid multiple client conflicts
+export const supabaseAdmin = null; // Temporarily disable admin client
+
+// Create admin client function instead of persistent client
+export const createAdminClient = () => {
+  if (!supabaseServiceKey) {
+    throw new Error('Admin operations not available - missing service key');
+  }
+  
+  return createClient<Database>(supabaseUrl, supabaseServiceKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,
-      detectSessionInUrl: false,
-      flowType: 'pkce'
-    },
-    global: {
-      headers: {
-        'x-client-info': 'supabase-admin-client'
-      }
+      detectSessionInUrl: false
     }
-  }
-) : null;
+  });
+};
 
 // Re-export types for convenience
 export type {
