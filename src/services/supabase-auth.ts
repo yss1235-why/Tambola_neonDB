@@ -589,30 +589,30 @@ async getUserDataFromSession(sessionUser: any): Promise<User | null> {
       console.log('🔍 Checking host table for host user...');
       
       try {
-        // Use RPC to bypass RLS issues
+        // Use RPC to get host data directly
         const { data: hostData, error: hostError } = await supabase
           .rpc('get_host_by_id', { host_id: userId });
         
-        console.log('🔍 RPC query result:', { data: !!hostData, error: hostError });
+        console.log('🔍 RPC result:', { hasData: !!hostData, error: hostError });
         
         if (hostError) {
           console.error('RPC error:', hostError);
-          throw new Error(`Failed to fetch host data: ${hostError.message}`);
+          return null;
         }
         
-        if (hostData && hostData.length > 0) {
+        if (hostData) {
           console.log('✅ Found host record via RPC');
           return {
-            ...hostData[0],
+            ...hostData,
             role: 'host'
           } as HostUser;
         }
         
-        console.warn('No host record found for user');
+        console.warn('No host record found');
         return null;
         
       } catch (error: any) {
-        console.error('Failed to get host data:', error);
+        console.error('Error in getUserDataFromSession:', error);
         return null;
       }
     } else {
