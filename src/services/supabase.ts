@@ -19,7 +19,7 @@ if (!supabaseServiceKey) {
 }
 
 // Regular client for normal operations
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
+export const supabase = createClient<Database>(supabaseUrl, supabaseServiceKey || supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
