@@ -585,26 +585,35 @@ async getUserDataFromSession(sessionUser: any): Promise<User | null> {
           role: 'admin'
         } as AdminUser;
       }
-} else if (userRole === 'host') {
+    } else if (userRole === 'host') {
       console.log('🔍 Checking host table for host user...');
       
-      const { data: hostData, error: hostError } = await supabase
-        .from('hosts')
-        .select('*')
-        .eq('id', userId)
-        .single();
-
-      if (hostError && hostError.code !== 'PGRST116') {
-        console.error('Error querying host table:', hostError);
-        throw new Error(`Database error: ${hostError.message}`);
-      }
-
-      if (hostData) {
-        console.log('✅ Found host record');
-        return {
-          ...hostData,
-          role: 'host'
-        } as HostUser;
+      try {
+        // Use RPC to bypass RLS issues
+        const { data: hostData, error: hostError } = await supabase
+          .rpc('get_host_by_id', { host_id: userId });
+        
+        console.log('🔍 RPC query result:', { data: !!hostData, error: hostError });
+        
+        if (hostError) {
+          console.error('RPC error:', hostError);
+          throw new Error(`Failed to fetch host data: ${hostError.message}`);
+        }
+        
+        if (hostData && hostData.length > 0) {
+          console.log('✅ Found host record via RPC');
+          return {
+            ...hostData[0],
+            role: 'host'
+          } as HostUser;
+        }
+        
+        console.warn('No host record found for user');
+        return null;
+        
+      } catch (error: any) {
+        console.error('Failed to get host data:', error);
+        return null;
       }
     } else {
       // No role metadata found - return null and force re-login
