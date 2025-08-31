@@ -588,7 +588,6 @@ async getUserDataFromSession(sessionUser: any): Promise<User | null> {
 } else if (userRole === 'host') {
       console.log('🔍 Checking host table for host user...');
       
-      // Direct query without timeout or extra auth calls
       const { data: hostData, error: hostError } = await supabase
         .from('hosts')
         .select('*')
