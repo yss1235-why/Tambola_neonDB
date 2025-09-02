@@ -48,10 +48,26 @@ useEffect(() => {
 
     let isMounted = true;
 
-    // First, check if there's an existing session
+  // First, check if there's an existing session
     const initializeAuth = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        // ✅ FIXED: Add timeout to prevent hanging
+        const getSessionWithTimeout = async () => {
+          const getSessionPromise = supabase.auth.getSession();
+          const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('getSession timed out')), 10000)
+          );
+          
+          try {
+            return await Promise.race([getSessionPromise, timeoutPromise]);
+          } catch (error) {
+            console.error('getSession timeout:', error);
+            return { data: { session: null }, error: null };
+          }
+        };
+
+
+        const { data: { session } } = await getSessionWithTimeout();
         
         if (session?.user && isMounted) {
           console.log('🔐 Found existing session, loading user data...');
@@ -92,56 +108,62 @@ useEffect(() => {
     };
 
     initializeAuth();
-
-    // Listen to auth state changes
+// Listen to auth state changes (FIXED: No async calls in callback)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         console.log('🔐 Auth event:', event, session?.user?.email || 'no user');
 
         if (!isMounted) return;
 
-       if (event === 'SIGNED_IN' && session?.user) {
-          try {
-            console.log('🔐 User signed in, loading profile...');
+        // ✅ FIXED: Use setTimeout to dispatch async work AFTER callback completes
+        if (event === 'SIGNED_IN' && session?.user) {
+          setTimeout(async () => {
+            if (!isMounted) return;
             
-            // Wait a bit for auth to stabilize after sign in
-            if (event === 'SIGNED_IN') {
+            try {
+              console.log('🔐 User signed in, loading profile...');
+              
+              // Wait a bit for auth to stabilize after sign in
               await new Promise(resolve => setTimeout(resolve, 500));
-            }
-      
-            // Use session user directly instead of making another API call
-            const userData = await supabaseAuth.getUserDataFromSession(session.user);
-            const role = userData?.role || null;
+        
+              // Use session user directly instead of making another API call
+              const userData = await supabaseAuth.getUserDataFromSession(session.user);
+              const role = userData?.role || null;
 
-            if (userData && role) {
-              setState({
-                user: userData,
-                userRole: role as 'admin' | 'host',
-                loading: false,
-                initialized: true,
-                error: null
-              });
-              console.log('✅ User profile loaded successfully:', userData.email);
-            } else {
-              console.warn('⚠️ User authenticated but no profile found');
-              setState({
-                user: null,
-                userRole: null,
-                loading: false,
-                initialized: true,
-                error: 'User profile not found'
-              });
+              if (!isMounted) return;
+
+              if (userData && role) {
+                setState({
+                  user: userData,
+                  userRole: role as 'admin' | 'host',
+                  loading: false,
+                  initialized: true,
+                  error: null
+                });
+                console.log('✅ User profile loaded successfully:', userData.email);
+              } else {
+                console.warn('⚠️ User authenticated but no profile found');
+                setState({
+                  user: null,
+                  userRole: null,
+                  loading: false,
+                  initialized: true,
+                  error: 'User profile not found'
+                });
+              }
+            } catch (error: any) {
+              console.error('❌ Error loading user profile:', error);
+              if (isMounted) {
+                setState({
+                  user: null,
+                  userRole: null,
+                  loading: false,
+                  initialized: true,
+                  error: error.message || 'Failed to load user profile'
+                });
+              }
             }
-          } catch (error: any) {
-            console.error('❌ Error loading user profile:', error);
-            setState({
-              user: null,
-              userRole: null,
-              loading: false,
-              initialized: true,
-              error: error.message || 'Failed to load user profile'
-            });
-          }
+          }, 0);
         } else if (event === 'SIGNED_OUT' || !session) {
           console.log('🔐 User signed out or no session');
           setState({
@@ -283,13 +305,27 @@ export const useSession = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // ✅ FIXED: Get initial session with timeout protection
+    const getSessionWithTimeout = async () => {
+      const getSessionPromise = supabase.auth.getSession();
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('getSession timed out')), 10000)
+      );
+      
+      try {
+        return await Promise.race([getSessionPromise, timeoutPromise]);
+      } catch (error) {
+        console.error('getSession timeout:', error);
+        return { data: { session: null }, error: null };
+      }
+    };
+
+    getSessionWithTimeout().then(({ data: { session } }) => {
       setSession(session);
       setLoading(false);
     });
 
-    // Listen for changes
+    // Listen for changes - no async calls in callback
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         setSession(session);
