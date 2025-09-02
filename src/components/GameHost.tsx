@@ -790,14 +790,14 @@ if (cachedWinnerData) {
 
   // ================== VIEW CALCULATION ==================
 
-  const getCurrentView = (): 'create' | 'booking' | 'live' | 'winners' | 'setup' => {
+const getCurrentView = (): 'create' | 'booking' | 'live' | 'winners' | 'setup' => {
   console.log('🎯 GameHost: Calculating current view:', {
     uiState,
     hasGameData: !!gameData,
-    gameOver: gameData?.gameState.gameOver,
-    isActive: gameData?.gameState.isActive,
-    isCountdown: gameData?.gameState.isCountdown,
-    calledNumbers: gameData?.gameState.calledNumbers?.length || 0
+    gameOver: gameData?.gameState?.gameOver,
+    isActive: gameData?.gameState?.isActive,
+    isCountdown: gameData?.gameState?.isCountdown,
+    calledNumbers: gameData?.gameState?.calledNumbers?.length || 0
   });
   
   if (uiState === 'winners') {
@@ -808,8 +808,8 @@ if (cachedWinnerData) {
     console.log('🎮 GameHost: Returning setup view');
     return 'setup';
   }
-  if (!gameData) {
-    console.log('❌ GameHost: No game data, returning setup');
+  if (!gameData || !gameData.gameState) {
+    console.log('❌ GameHost: No game data or game state, returning setup');
     return 'setup';
   }
   if (gameData.gameState.gameOver) {
