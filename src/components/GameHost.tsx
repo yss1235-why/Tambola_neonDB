@@ -982,9 +982,9 @@ if (gameData.game_state.isActive || gameData.game_state.isCountdown ||
    
     <HostControlsProvider userId={user.id}>
       <HostDisplay onCreateNewGame={createNewGame} />
-     <AudioManagerForHost
+    <AudioManagerForHost
         currentNumber={gameData.game_state.currentNumber}
-        prizes={Object.values(gameData.prizes)}
+        prizes={Object.values(gameData.prizes || {})}
         forceEnable={true}
         gameState={gameData.game_state}
       />
