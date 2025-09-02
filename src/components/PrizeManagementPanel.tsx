@@ -60,19 +60,19 @@ export const PrizeManagementPanel: React.FC<PrizeManagementPanelProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <div className="text-center p-3 bg-blue-50 rounded-lg border border-blue-200">
               <div className="text-2xl font-bold text-blue-600">
-                {Object.keys(gameData.prizes).length}
+                {Object.keys(gameData.prizes || {}).length}
               </div>
               <div className="text-sm text-blue-700">Total Prizes</div>
             </div>
             <div className="text-center p-3 bg-green-50 rounded-lg border border-green-200">
               <div className="text-2xl font-bold text-green-600">
-                {Object.values(gameData.prizes).filter(p => p.won).length}
+                {Object.values(gameData.prizes || {}).filter(p => p.won).length}
               </div>
               <div className="text-sm text-green-700">Prizes Won</div>
             </div>
             <div className="text-center p-3 bg-purple-50 rounded-lg border border-purple-200">
               <div className="text-2xl font-bold text-purple-600">
-                {Object.values(gameData.prizes).reduce((total, prize) => 
+                {Object.values(gameData.prizes || {}).reduce((total, prize) => 
                   total + (prize.winners?.length || 0), 0
                 )}
               </div>
@@ -95,7 +95,7 @@ export const PrizeManagementPanel: React.FC<PrizeManagementPanelProps> = ({
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {Object.values(gameData.prizes)
+            {Object.values(gameData.prizes || {})
               .sort((a, b) => (a.order || 0) - (b.order || 0))
               .map((prize) => {
               const displayInfo = getPrizeDisplayInfo(prize);
@@ -165,7 +165,7 @@ export const PrizeManagementPanel: React.FC<PrizeManagementPanelProps> = ({
           </div>
 
           {/* No Prizes Message */}
-          {Object.keys(gameData.prizes).length === 0 && (
+          {Object.keys(gameData.prizes || {}).length === 0 && (
             <div className="text-center py-8">
               <Trophy className="w-12 h-12 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-600">No prizes configured for this game.</p>
