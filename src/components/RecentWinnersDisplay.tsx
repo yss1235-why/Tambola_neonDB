@@ -95,7 +95,7 @@ export const RecentWinnersDisplay: React.FC<RecentWinnersDisplayProps> = ({
     );
   }
   
-  const wonPrizes = Object.values(gameData.prizes).filter(p => p.won);
+  const wonPrizes = Object.values(gameData.prizes || {}).filter(p => p.won);
   const totalWinners = wonPrizes.reduce((total, prize) => total + (prize.winners?.length || 0), 0);
   
   // 🎯 HOST MODE: Clean celebration view
@@ -344,7 +344,7 @@ export const RecentWinnersDisplay: React.FC<RecentWinnersDisplayProps> = ({
                                         {/* ✅ NEW: Use shared renderTicket utility with pattern highlighting */}
                                         {renderTicket({
                                           ticket: winnerTicket,
-                                          calledNumbers: gameData.gameState.calledNumbers || [],
+                                          calledNumbers: gameData.game_state?.calledNumbers || [],
                                           showPlayerInfo: false,
                                           patternHighlight: prize.id // ✅ KEY FEATURE: Pattern highlighting
                                         })}
@@ -375,7 +375,7 @@ export const RecentWinnersDisplay: React.FC<RecentWinnersDisplayProps> = ({
                 <h3 className="text-base sm:text-lg font-semibold text-gray-700 mb-2">No Prizes Won</h3>
                 <p className="text-sm sm:text-base text-gray-600">No prizes were won in this game.</p>
                 <p className="text-xs sm:text-sm text-gray-500 mt-1">
-                  Game ended with {gameData.gameState.calledNumbers?.length || 0} numbers called.
+                  Game ended with {gameData.game_state?.calledNumbers?.length || 0} numbers called.
                 </p>
               </div>
             )}
