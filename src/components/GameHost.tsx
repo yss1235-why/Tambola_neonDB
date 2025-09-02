@@ -756,7 +756,7 @@ if (cachedWinnerData) {
 
   // Handle game completion and winner display
   useEffect(() => {
-    if (gameData?.gameState.gameOver && uiState === 'calculated') {
+    if (gameData?.game_state.gameOver && uiState === 'calculated') {
       console.log('🏆 Game completed, caching winner data for display');
       setCachedWinnerData(gameData);
       setUIState('winners');
@@ -766,7 +766,7 @@ if (cachedWinnerData) {
       console.log('🎮 Game deleted, transitioning to setup mode');
       setUIState('setup');
     }
-  }, [gameData?.gameState.gameOver, gameData, uiState, cachedWinnerData]);
+  }, [gameData?.game_state.gameOver, gameData, uiState, cachedWinnerData]);
 
   // Clear operation state when real-time data updates
   useEffect(() => {
@@ -794,10 +794,10 @@ const getCurrentView = (): 'create' | 'booking' | 'live' | 'winners' | 'setup' =
   console.log('🎯 GameHost: Calculating current view:', {
     uiState,
     hasGameData: !!gameData,
-    gameOver: gameData?.gameState?.gameOver,
-    isActive: gameData?.gameState?.isActive,
-    isCountdown: gameData?.gameState?.isCountdown,
-    calledNumbers: gameData?.gameState?.calledNumbers?.length || 0
+    gameOver: gameData?.game_state?.gameOver,
+    isActive: gameData?.game_state?.isActive,
+    isCountdown: gameData?.game_state?.isCountdown,
+    calledNumbers: gameData?.game_state?.calledNumbers?.length || 0
   });
   
   if (uiState === 'winners') {
@@ -808,17 +808,17 @@ const getCurrentView = (): 'create' | 'booking' | 'live' | 'winners' | 'setup' =
     console.log('🎮 GameHost: Returning setup view');
     return 'setup';
   }
-  if (!gameData || !gameData.gameState) {
+  if (!gameData || !gameData.game_state) {
     console.log('❌ GameHost: No game data or game state, returning setup');
     return 'setup';
   }
-  if (gameData.gameState.gameOver) {
+  if (gameData.game_state.gameOver) {
     console.log('🏁 GameHost: Game over, returning winners');
     return 'winners';
   }
   // ✅ FIXED: Include paused games with called numbers as 'live'
-  if (gameData.gameState.isActive || gameData.gameState.isCountdown || 
-      (gameData.gameState.calledNumbers && gameData.gameState.calledNumbers.length > 0)) {
+ gameData.game_state.isActive || gameData.game_state.isCountdown || 
+      (gameData.game_state.calledNumbers && gameData.game_state.calledNumbers.length > 0) {
     console.log('🎮 GameHost: Game started/paused - returning LIVE view');
     return 'live';
   }
