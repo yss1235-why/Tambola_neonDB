@@ -1,5 +1,5 @@
 // Supabase Authentication Service
-import { supabase, supabaseAdmin } from './supabase';
+import { supabase, supabaseAdmin, createAdminClient } from './supabase';
 import type { 
   AdminUser, 
   HostUser, 
@@ -9,18 +9,65 @@ import type {
 } from './supabase-types';
 
 class SupabaseAuthService {
-  // ==================== AUTHENTICATION ====================
+  // ==================== TIMEOUT HELPERS ====================
 
+  /**
+   * Wrapper to add timeout to any auth operation
+   */
+  private async withTimeout<T>(
+    promise: Promise<T>, 
+    operation: string, 
+    timeoutMs: number = 10000
+  ): Promise<T> {
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error(`${operation} timed out after ${timeoutMs}ms`)), timeoutMs)
+    );
+    
+    try {
+      return await Promise.race([promise, timeoutPromise]);
+    } catch (error: any) {
+      console.error(`❌ ${operation} failed:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Safe getUser with timeout protection
+   */
+  private async getSafeUser() {
+    return await this.withTimeout(
+      supabase.auth.getUser(),
+      'getUser',
+      10000
+    );
+  }
+
+  /**
+   * Safe getSession with timeout protection  
+   */
+  private async getSafeSession() {
+    return await this.withTimeout(
+      supabase.auth.getSession(),
+      'getSession',
+      10000
+    );
+  }
+
+  // ==================== AUTHENTICATION ====================
   /**
    * Login as admin user
    */
   async loginAdmin(email: string, password: string): Promise<AdminUser> {
     try {
-      // Sign in with Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
+     // ✅ FIXED: Sign in with timeout protection
+      const { data: authData, error: authError } = await this.withTimeout(
+        supabase.auth.signInWithPassword({
+          email,
+          password
+        }),
+        'signInWithPassword',
+        15000 // Longer timeout for login
+      );
 
       if (authError) {
         throw new Error(authError.message);
@@ -70,11 +117,15 @@ class SupabaseAuthService {
    */
   async loginHost(email: string, password: string): Promise<HostUser> {
     try {
-      // Sign in with Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
+    // ✅ FIXED: Sign in with timeout protection
+      const { data: authData, error: authError } = await this.withTimeout(
+        supabase.auth.signInWithPassword({
+          email,
+          password
+        }),
+        'signInWithPassword',
+        15000 // Longer timeout for login
+      );
 
       if (authError) {
         throw new Error(authError.message);
@@ -136,7 +187,12 @@ class SupabaseAuthService {
    */
   async logout(): Promise<void> {
     try {
-      const { error } = await supabase.auth.signOut();
+      // ✅ FIXED: Logout with timeout protection
+      const { error } = await this.withTimeout(
+        supabase.auth.signOut(),
+        'signOut',
+        10000
+      );
       
       if (error) {
         throw error;
@@ -157,7 +213,8 @@ async getUserData(): Promise<User | null> {
     try {
       console.log('🔍 getUserData: Starting...');
       
-      const { data: { user } } = await supabase.auth.getUser();
+    // ✅ FIXED: Use safe method with timeout
+      const { data: { user } } = await this.getSafeUser();
       console.log('🔍 getUserData: Got user from auth:', user?.id);
       
       if (!user) {
