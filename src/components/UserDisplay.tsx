@@ -33,6 +33,8 @@ interface SearchedTicket {
 export const UserDisplay: React.FC = () => {
   const { gameData, currentPhase, timeUntilAction, isLoading } = useGameData();
   const calledNumbers = gameData?.game_state?.calledNumbers || [];
+  
+ 
   // Local state for user interactions (search, etc.)
   const [expandedPrizes, setExpandedPrizes] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
@@ -41,8 +43,8 @@ export const UserDisplay: React.FC = () => {
   const tickets = gameData?.tickets || {};
   // ✅ CHANGED: Use visual called numbers instead of database
 
-  const currentNumber = gameData?.game_state.currentNumber;
- const prizes = gameData ? Object.values(gameData.prizes || {}).sort((a, b) => (a.order || 0) - (b.order || 0)) : [];
+  const currentNumber = gameData?.game_state?.currentNumber;
+  const prizes = gameData ? Object.values(gameData.prizes || {}).sort((a, b) => (a.order || 0) - (b.order || 0)) : [];
   // ✅ NEW: Validate ticket ID format consistency
   const validateTicketFormat = React.useCallback(() => {
     const ticketIds = Object.keys(tickets);
@@ -502,9 +504,9 @@ export const UserDisplay: React.FC = () => {
 
         {/* Audio Manager for Users */}
         {gameData && (
-          <AudioManager
-            currentNumber={gameData.gameState.currentNumber}
-            prizes={Object.values(gameData.prizes)}
+         <AudioManager
+            currentNumber={gameData.game_state?.currentNumber}
+            prizes={Object.values(gameData.prizes || {})}
             onAudioComplete={() => {
               // For users, no callback needed - only hosts need timing control
               console.log('🔊 User audio announcement completed');
