@@ -32,7 +32,7 @@ export const RecentWinnersDisplay: React.FC<RecentWinnersDisplayProps> = ({
   
   // ✅ START WITH ALL TICKETS COLLAPSED for mobile-friendly one-screen view
   React.useEffect(() => {
-    if (gameData && gameData.gameState.gameOver) {
+    if (gameData && gameData.game_state.gameOver) {
       setExpandedWinners(new Set()); // Start collapsed
     }
   },  [gameData?.gameState.gameOver]);
@@ -83,7 +83,7 @@ export const RecentWinnersDisplay: React.FC<RecentWinnersDisplayProps> = ({
     );
   }
 
-  if (!gameData || !gameData.gameState.gameOver) {
+  if (!gameData || !gameData.game_state.gameOver) {
     return (
       <Card>
         <CardContent className="p-6 text-center">
