@@ -26,11 +26,27 @@ class SupabaseGameService {
     try {
       console.log('🎮 Creating new game:', config.name);
       
-      // Ensure we have a valid session before creating game
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
+     // ✅ FIXED: Use timeout-protected session check
+      const getSessionWithTimeout = async () => {
+        const getSessionPromise = supabase.auth.getSession();
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('getSession timed out')), 10000)
+        );
+        
+        try {
+          return await Promise.race([getSessionPromise, timeoutPromise]);
+        } catch (error) {
+          console.error('getSession timeout:', error);
+          return { data: { session: null }, error: null };
+        }
+      };
+
+      const { data: { session } } = await getSessionWithTimeout();
+      if (!session?.user) {
         throw new Error('User authentication required. Please login again.');
       }
+
+      console.log('🔐 Session verified for game creation:', session.user.email);
 
       // Create game record
       const { data: gameData, error } = await supabase
@@ -65,7 +81,12 @@ class SupabaseGameService {
         }
       }
 
-      console.log('✅ Game created successfully:', gameData.id);
+     console.log('✅ Game created successfully:', {
+        gameId: gameData.id,
+        hostId: gameData.host_id,
+        maxTickets: gameData.max_tickets,
+        sessionUserId: session.user.id
+      });
       
       return gameData as GameData;
 
