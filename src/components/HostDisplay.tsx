@@ -318,7 +318,7 @@ const {
       </Card>
 
       {/* Recent Numbers Called */}
-      {gameData.gameState.calledNumbers && gameData.gameState.calledNumbers.length > 0 && (
+      {{gameData.game_state.calledNumbers && gameData.game_state.calledNumbers.length > 0 && ( && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center">
@@ -328,7 +328,7 @@ const {
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-2">
-              {gameData.gameState.calledNumbers
+              {gameData.game_state.calledNumbers
                 .slice(-20)
                 .reverse()
                 .map((num, index) => (
@@ -344,9 +344,9 @@ const {
                   </div>
                 ))}
             </div>
-            {gameData.gameState.calledNumbers.length > 20 && (
+            {gameData.game_state.calledNumbers.length > 20 && (
               <p className="text-sm text-gray-500 mt-3 text-center">
-                Showing last 20 numbers • Total called: {gameData.gameState.calledNumbers.length}
+                Showing last 20 numbers • Total called: {gameData.game_state.calledNumbers.length}
               </p>
             )}
           </CardContent>
