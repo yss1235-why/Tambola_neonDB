@@ -88,16 +88,16 @@ export const UserLandingPage: React.FC<UserLandingPageProps> = ({
     if (!gameDataSource.games) return [];
     
     return gameDataSource.games.map(game => {
-      const bookedTickets = game.tickets ? 
-        Object.values(game.tickets).filter(t => t.isBooked).length : 0;
+     const bookedTickets = game.tickets ? 
+        Object.values(game.tickets || {}).filter(t => t.isBooked).length : 0;
       
       // 🆕 NEW: Calculate winner statistics for completed games
       let winnerCount = 0;
       let prizesWon = 0;
-      const totalPrizes = Object.keys(game.prizes).length;
+     const totalPrizes = Object.keys(game.prizes || {}).length;
       
     if (game.game_state.gameOver) {
-        const wonPrizes = Object.values(game.prizes).filter(p => p.won);
+        const wonPrizes = Object.values(game.prizes || {}).filter(p => p.won);
         prizesWon = wonPrizes.length;
         winnerCount = wonPrizes.reduce((total, prize) => 
           total + (prize.winners?.length || 0), 0
