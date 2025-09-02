@@ -81,7 +81,7 @@ class SupabaseGameService {
         }
       }
 
-     console.log('✅ Game created successfully:', {
+    console.log('✅ Game created successfully:', {
         gameId: gameData.id,
         hostId: gameData.host_id,
         maxTickets: gameData.max_tickets,
