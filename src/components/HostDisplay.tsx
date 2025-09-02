@@ -318,7 +318,7 @@ const {
       </Card>
 
       {/* Recent Numbers Called */}
-      {{gameData.game_state.calledNumbers && gameData.game_state.calledNumbers.length > 0 && ( && (
+      {gameData.game_state.calledNumbers && gameData.game_state.calledNumbers.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center">
