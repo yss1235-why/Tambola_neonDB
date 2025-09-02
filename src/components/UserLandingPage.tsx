@@ -109,10 +109,10 @@ export const UserLandingPage: React.FC<UserLandingPageProps> = ({
         name: game.name,
         hostPhone: game.hostPhone,
         maxTickets: game.maxTickets,
-        isActive: game.gameState.isActive,
-        isCountdown: game.gameState.isCountdown,
-        hasStarted: (game.gameState.calledNumbers?.length || 0) > 0,
-        gameOver: game.gameState.gameOver, // 🆕 NEW
+       isActive: game.game_state.isActive,
+        isCountdown: game.game_state.isCountdown,
+        hasStarted: (game.game_state.calledNumbers?.length || 0) > 0,
+        gameOver: game.game_state.gameOver, // 🆕 NEW
         bookedTickets,
         createdAt: game.createdAt,
         // 🆕 NEW: Winner statistics
@@ -134,16 +134,16 @@ export const UserLandingPage: React.FC<UserLandingPageProps> = ({
     const selectedGame = gameDataSource.games?.find(g => g.gameId === gameId);
     if (selectedGame) {
       // 🆕 NEW: Handle completed games
-      if (selectedGame.gameState.gameOver) {
+      if (selectedGame.game_state.gameOver) {
         console.log('🏆 Selected completed game - showing winners');
         setCurrentView('winners');
         return;
       }
       
       // ✅ UNCHANGED: Existing active game logic
-      const hasStarted = (selectedGame.gameState.calledNumbers?.length || 0) > 0 || 
-                        selectedGame.gameState.isActive || 
-                        selectedGame.gameState.isCountdown;
+     const hasStarted = (selectedGame.game_state.calledNumbers?.length || 0) > 0 || 
+                  selectedGame.game_state.isActive || 
+                  selectedGame.game_state.isCountdown;
       
       setCurrentView(hasStarted ? 'game' : 'booking');
     }
@@ -172,15 +172,15 @@ useEffect(() => {
   // STEP 4: Determine what view should be shown based on current game state
   let shouldShowView: 'booking' | 'game' | 'winners';
   
-  if (selectedGame.gameState.gameOver) {
+ if (selectedGame.game_state.gameOver) {
     // Case 1: Game is finished → show winners page
     shouldShowView = 'winners';
     console.log('🏆 Game finished, should show winners');
     
   } else if (
-    selectedGame.gameState.isActive || 
-    selectedGame.gameState.isCountdown || 
-    (selectedGame.gameState.calledNumbers?.length || 0) > 0
+    selectedGame.game_state.isActive || 
+    selectedGame.game_state.isCountdown || 
+    (selectedGame.game_state.calledNumbers?.length || 0) > 0
   ) {
     // Case 2: Game has started (active, countdown, or numbers called) → show live game
     shouldShowView = 'game';
@@ -196,10 +196,10 @@ useEffect(() => {
   if (currentView !== shouldShowView) {
     console.log(`🔄 AUTO-SWITCHING VIEW: ${currentView} → ${shouldShowView}`, {
       gameId: selectedGameId,
-      gameOver: selectedGame.gameState.gameOver,
-      isActive: selectedGame.gameState.isActive,
-      isCountdown: selectedGame.gameState.isCountdown,
-      calledNumbers: selectedGame.gameState.calledNumbers?.length || 0
+      gameOver: selectedGame.game_state.gameOver,
+      isActive: selectedGame.game_state.isActive,
+      isCountdown: selectedGame.game_state.isCountdown,
+      calledNumbers: selectedGame.game_state.calledNumbers?.length || 0
     });
     
     // Make the switch!
