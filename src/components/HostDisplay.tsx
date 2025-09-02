@@ -50,7 +50,7 @@ const {
 
   // Add delay before showing winner display
   useEffect(() => {
-    if (gameData?.game_state?.gameOver) {
+   if (gameData?.game_state?.gameOver) {
       // Wait 2.5 seconds for prize audio to finish
       const timer = setTimeout(() => {
         setShowWinnerDisplay(true);
