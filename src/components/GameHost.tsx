@@ -360,11 +360,16 @@ const [gameCreationError, setGameCreationError] = useState<string | null>(null);
 const isSubscriptionValid = React.useCallback(() => {
   console.log('DEBUG Subscription Check:', {
     hasUser: !!user,
+    userId: user?.id,
     subscription_end_date: user?.subscription_end_date,
-    is_active: user?.is_active,
-    rawUser: user
+    is_active: user?.is_active
   });
 
+  if (!user?.id) {
+    console.log('❌ No user ID available for subscription check');
+    return false;
+  }
+  
   if (!user?.subscription_end_date) {
     console.log('DEBUG: No subscription_end_date');
     return false;
@@ -425,7 +430,7 @@ const getSubscriptionStatus = React.useCallback(() => {
       return;
     }
 
-    if (!user?.uid) {
+   if (!user?.id) {
       console.error('❌ No user context available');
       alert('User not authenticated');
       return;
@@ -547,7 +552,7 @@ const createNewGame = async () => {
   }
 
   // ✅ SAFETY: Additional validation before game creation
-  if (!user?.uid) {
+  if (!user?.id) {
     alert('User authentication required');
     return;
   }
@@ -607,12 +612,32 @@ if (cachedWinnerData) {
         selectedPrizes: createGameForm.selectedPrizes
       });
 
-      const gameConfig = {
-        name: `Tambola Game ${new Date().toLocaleDateString()}`,
-        maxTickets: maxTicketsNum,
-        ticketPrice: 0,
-        hostPhone: createGameForm.hostPhone
-      };
+    // Generate game name
+     const now = new Date();
+     const gameName = `Tambola Game - ${now.toLocaleDateString()} ${now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
+     
+     // Convert selected prizes to game prize objects
+     const prizesToCreate = createGameForm.selectedPrizes.map((prizeId: string) => {
+       const prizeTemplate = AVAILABLE_PRIZES.find(p => p.id === prizeId);
+       return {
+         id: prizeId,
+         name: prizeTemplate?.name || prizeId,
+         pattern: prizeTemplate?.pattern || '',
+         description: prizeTemplate?.description || '',
+         order: prizeTemplate?.order || 0,
+         won: false,
+         winner: null,
+         winningTicket: null
+       };
+     });
+
+     const gameConfig = {
+          name: gameName,
+          host_id: user.id, // ✅ FIXED: Use correct Supabase property
+          max_tickets: parseInt(createGameForm.maxTickets),
+          ticket_price: 0,
+          prizes: prizesToCreate
+        };
 
      const newGame = await supabaseService.createGame(
         gameConfig,
