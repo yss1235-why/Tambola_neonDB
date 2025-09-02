@@ -96,7 +96,7 @@ export const UserLandingPage: React.FC<UserLandingPageProps> = ({
       let prizesWon = 0;
       const totalPrizes = Object.keys(game.prizes).length;
       
-      if (game.gameState.gameOver) {
+    if (game.game_state.gameOver) {
         const wonPrizes = Object.values(game.prizes).filter(p => p.won);
         prizesWon = wonPrizes.length;
         winnerCount = wonPrizes.reduce((total, prize) => 
@@ -109,10 +109,10 @@ export const UserLandingPage: React.FC<UserLandingPageProps> = ({
         name: game.name,
         hostPhone: game.hostPhone,
         maxTickets: game.maxTickets,
-       isActive: game.game_state.isActive,
+        isActive: game.game_state.isActive,
         isCountdown: game.game_state.isCountdown,
         hasStarted: (game.game_state.calledNumbers?.length || 0) > 0,
-        gameOver: game.game_state.gameOver, // 🆕 NEW
+        gameOver: game.game_state.gameOver,
         bookedTickets,
         createdAt: game.createdAt,
         // 🆕 NEW: Winner statistics
@@ -140,10 +140,9 @@ export const UserLandingPage: React.FC<UserLandingPageProps> = ({
         return;
       }
       
-      // ✅ UNCHANGED: Existing active game logic
-     const hasStarted = (selectedGame.game_state.calledNumbers?.length || 0) > 0 || 
-                  selectedGame.game_state.isActive || 
-                  selectedGame.game_state.isCountdown;
+      const hasStarted = (selectedGame.game_state.calledNumbers?.length || 0) > 0 || 
+                        selectedGame.game_state.isActive || 
+                        selectedGame.game_state.isCountdown;
       
       setCurrentView(hasStarted ? 'game' : 'booking');
     }
@@ -173,7 +172,6 @@ useEffect(() => {
   let shouldShowView: 'booking' | 'game' | 'winners';
   
  if (selectedGame.game_state.gameOver) {
-    // Case 1: Game is finished → show winners page
     shouldShowView = 'winners';
     console.log('🏆 Game finished, should show winners');
     
