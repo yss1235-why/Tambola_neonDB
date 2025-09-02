@@ -281,19 +281,19 @@ const AudioManagerForPlayer: React.FC<{
     canUpdate: boolean;
     reason?: string;
   } => {
-    if (gameData.gameState.isActive) {
+    if (gameData.game_state.isActive) {
       return { canUpdate: false, reason: 'Game is currently active' };
     }
     
-    if (gameData.gameState.isCountdown) {
+    if (gameData.game_state.isCountdown) {
       return { canUpdate: false, reason: 'Game is starting (countdown active)' };
     }
     
-    if (gameData.gameState.gameOver) {
+    if (gameData.game_state.gameOver) {
       return { canUpdate: false, reason: 'Game has already ended' };
     }
     
-    const numbersCalledCount = gameData.gameState.calledNumbers?.length || 0;
+    const numbersCalledCount = gameData.game_state.calledNumbers?.length || 0;
     if (numbersCalledCount > 0) {
       return { canUpdate: false, reason: 'Numbers have already been called' };
     }
@@ -817,8 +817,8 @@ const getCurrentView = (): 'create' | 'booking' | 'live' | 'winners' | 'setup' =
     return 'winners';
   }
   // ✅ FIXED: Include paused games with called numbers as 'live'
- gameData.game_state.isActive || gameData.game_state.isCountdown || 
-      (gameData.game_state.calledNumbers && gameData.game_state.calledNumbers.length > 0) {
+if (gameData.game_state.isActive || gameData.game_state.isCountdown ||
+     (gameData.game_state.calledNumbers && gameData.game_state.calledNumbers.length > 0)) {
     console.log('🎮 GameHost: Game started/paused - returning LIVE view');
     return 'live';
   }
@@ -983,10 +983,10 @@ const getCurrentView = (): 'create' | 'booking' | 'live' | 'winners' | 'setup' =
     <HostControlsProvider userId={user.id}>
       <HostDisplay onCreateNewGame={createNewGame} />
      <AudioManagerForHost
-        currentNumber={gameData.gameState.currentNumber}
+        currentNumber={gameData.game_state.currentNumber}
         prizes={Object.values(gameData.prizes)}
         forceEnable={true}
-        gameState={gameData.gameState}
+        gameState={gameData.game_state}
       />
     </HostControlsProvider>
   </div>
