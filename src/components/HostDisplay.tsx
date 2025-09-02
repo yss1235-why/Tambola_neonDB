@@ -50,7 +50,7 @@ const {
 
   // Add delay before showing winner display
   useEffect(() => {
-    if (gameData?.gameState?.gameOver) {
+    if (gameData?.game_state?.gameOver) {
       // Wait 2.5 seconds for prize audio to finish
       const timer = setTimeout(() => {
         setShowWinnerDisplay(true);
@@ -60,7 +60,7 @@ const {
     } else {
       setShowWinnerDisplay(false);
     }
-  }, [gameData?.gameState?.gameOver]);
+  }, [gameData?.game_state?.gameOver]);
  
   // Toggle prize expansion
   const togglePrize = (prizeId: string) => {
@@ -172,7 +172,7 @@ const {
   }
 
 // ✅ NEW: SIMPLIFIED WINNER DISPLAY after delay
-  if (showWinnerDisplay && gameData?.gameState?.gameOver) {
+  if (showWinnerDisplay && gameData?.game_state?.gameOver) {
     console.log(`🏆 Showing winner display after delay`);
     return (
       <SimplifiedWinnerDisplay 
