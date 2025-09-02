@@ -616,14 +616,14 @@ if (cachedWinnerData) {
      const now = new Date();
      const gameName = `Tambola Game - ${now.toLocaleDateString()} ${now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
      
-    const prizesToCreate = createGameForm.selectedPrizes.map((prizeId: string) => {
+   const prizesToCreate = createGameForm.selectedPrizes.map((prizeId: string) => {
        const prizeTemplate = AVAILABLE_PRIZES.find(p => p.id === prizeId);
        return {
          id: prizeId,
          name: prizeTemplate?.name || prizeId,
          pattern: prizeTemplate?.pattern || '',
          description: prizeTemplate?.description || '',
-         // order: prizeTemplate?.order || 0,  // ❌ REMOVED: Column doesn't exist in database
+         prize_order: prizeTemplate?.order || 0,
          won: false,
          winner: null,
          winningTicket: null
