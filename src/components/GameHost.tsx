@@ -616,21 +616,19 @@ if (cachedWinnerData) {
      const now = new Date();
      const gameName = `Tambola Game - ${now.toLocaleDateString()} ${now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
      
-     // Convert selected prizes to game prize objects
-     const prizesToCreate = createGameForm.selectedPrizes.map((prizeId: string) => {
+    const prizesToCreate = createGameForm.selectedPrizes.map((prizeId: string) => {
        const prizeTemplate = AVAILABLE_PRIZES.find(p => p.id === prizeId);
        return {
          id: prizeId,
          name: prizeTemplate?.name || prizeId,
          pattern: prizeTemplate?.pattern || '',
          description: prizeTemplate?.description || '',
-         order: prizeTemplate?.order || 0,
+         // order: prizeTemplate?.order || 0,  // ❌ REMOVED: Column doesn't exist in database
          won: false,
          winner: null,
          winningTicket: null
        };
      });
-
      const gameConfig = {
           name: gameName,
           host_id: user.id, // ✅ FIXED: Use correct Supabase property
