@@ -39,19 +39,19 @@ export const TicketBookingGrid: React.FC<TicketBookingGridProps> = ({
    const unsubscribe = supabaseService.subscribeToGame(gameData.gameId, (updatedGameData) => {
       if (updatedGameData) {
         console.log('📡 TicketBooking: Game state updated:', {
-          isActive: updatedGameData.gameState.isActive,
-          isCountdown: updatedGameData.gameState.isCountdown,
-          calledNumbers: updatedGameData.gameState.calledNumbers?.length || 0,
-          gameOver: updatedGameData.gameState.gameOver
+         isActive: updatedGameData.game_state.isActive,
+          isCountdown: updatedGameData.game_state.isCountdown,
+          calledNumbers: updatedGameData.game_state.calledNumbers?.length || 0,
+          gameOver: updatedGameData.game_state.gameOver
         });
 
         setRealTimeGameData(updatedGameData);
 
         // ✅ FIXED: Auto-switch to game view when host starts the game
-        const hasGameStarted = (updatedGameData.gameState.calledNumbers?.length || 0) > 0 || 
-                              updatedGameData.gameState.isActive || 
-                              updatedGameData.gameState.isCountdown ||
-                              updatedGameData.gameState.gameOver;
+        const hasGameStarted = (updatedGameData.game_state.calledNumbers?.length || 0) > 0 || 
+                              updatedGameData.game_state.isActive ||
+                              updatedGameData.game_state.isCountdown ||
+                              updatedGameData.game_state.gameOver;
 
         if (hasGameStarted) {
           console.log('🎮 TicketBooking: Auto-switching to game view - host started the game!');
@@ -132,7 +132,7 @@ export const TicketBookingGrid: React.FC<TicketBookingGridProps> = ({
         }, {} as { [key: string]: TambolaTicket })
     : allTickets;
   // ✅ FIXED: Check real-time game state
-  if (realTimeGameData.gameState.isActive || realTimeGameData.gameState.isCountdown) {
+ if (realTimeGameData.game_state.isActive || realTimeGameData.game_state.isCountdown) {
     // Game is starting/started - this view should switch automatically
     return (
       <div className="min-h-screen bg-gradient-to-br from-orange-50 via-red-50 to-pink-50 p-4 flex items-center justify-center">
