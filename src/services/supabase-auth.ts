@@ -579,8 +579,8 @@ async getUserData(): Promise<User | null> {
   /**
    * Get current session
    */
-  async getCurrentSession() {
-    const { data: { session } } = await supabase.auth.getSession();
+ async getCurrentSession() {
+    const { data: { session } } = await this.getSafeSession();
     return session;
   }
 
