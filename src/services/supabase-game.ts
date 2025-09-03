@@ -513,17 +513,16 @@ class SupabaseGameService {
    * Book ticket
    */
   async bookTicket(ticketId: string, playerName: string, playerPhone?: string): Promise<void> {
-    try {
-      const { error } = await supabase
-        .from('tickets')
-        .update({
-          is_booked: true,
-          player_name: playerName,
-          player_phone: playerPhone,
-          booked_at: new Date().toISOString()
-        })
-        .eq('id', ticketId);
-
+  try {
+    const { error } = await supabase
+      .from('tickets')
+      .update({
+        is_booked: true,
+        player_name: playerName,
+        player_phone: playerPhone,
+        booked_at: new Date().toISOString()
+      })
+      .eq('ticket_id', ticketId);
       if (error) {
         throw error;
       }
@@ -542,12 +541,11 @@ class SupabaseGameService {
   async markTicketNumber(ticketId: string, number: number): Promise<void> {
     try {
       // Get current ticket
-      const { data: ticket, error: fetchError } = await supabase
+     const { data: ticket, error: fetchError } = await supabase
         .from('tickets')
         .select('marked_numbers')
-        .eq('id', ticketId)
+        .eq('ticket_id', ticketId)
         .single();
-
       if (fetchError || !ticket) {
         throw new Error('Ticket not found');
       }
@@ -557,10 +555,10 @@ class SupabaseGameService {
       if (!markedNumbers.includes(number)) {
         markedNumbers.push(number);
 
-        const { error } = await supabase
+       const { error } = await supabase
           .from('tickets')
           .update({ marked_numbers: markedNumbers })
-          .eq('id', ticketId);
+          .eq('ticket_id', ticketId);
 
         if (error) {
           throw error;
