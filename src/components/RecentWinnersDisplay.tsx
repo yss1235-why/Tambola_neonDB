@@ -55,7 +55,14 @@ export const RecentWinnersDisplay: React.FC<RecentWinnersDisplayProps> = ({
     if (!gameData) return null;
     
     const endTime = new Date(gameData.lastWinnerAt || gameData.createdAt);
-    const totalPlayers = Object.values(gameData.tickets || {}).filter(t => t.isBooked).length;
+   const totalPlayers = (() => {
+      try {
+        return Object.values(gameData.tickets || {}).filter(t => t && t.isBooked).length;
+      } catch (error) {
+        console.error('Error counting total players in RecentWinnersDisplay:', error);
+        return 0;
+      }
+    })();
     
     return { endTime, totalPlayers };
   }, [gameData]);
@@ -95,8 +102,15 @@ export const RecentWinnersDisplay: React.FC<RecentWinnersDisplayProps> = ({
     );
   }
   
-  const wonPrizes = Object.values(gameData.prizes || {}).filter(p => p.won);
-  const totalWinners = wonPrizes.reduce((total, prize) => total + (prize.winners?.length || 0), 0);
+ const wonPrizes = (() => {
+    try {
+      return Object.values(gameData.prizes || {}).filter(p => p && p.won);
+    } catch (error) {
+      console.error('Error processing won prizes in RecentWinnersDisplay:', error);
+      return [];
+    }
+  })();
+  const totalWinners = wonPrizes.reduce((total, prize) => total + ((prize && prize.winners && prize.winners.length) || 0), 0);
   
   // 🎯 HOST MODE: Clean celebration view
   if (hostMode) {
