@@ -2,9 +2,9 @@
 // Replaces Firebase GameDataProvider - MUCH SIMPLER!
 
 import React, { createContext, useContext, useMemo } from 'react';
-import { useGameSubscription, useHostCurrentGameSubscription } from '@/hooks/useSupabaseSubscription';
+import { useGameSubscription, useHostCurrentGameSubscription, useGamePrizesSubscription, useGameTicketsSubscription } from '@/hooks/useSupabaseSubscription';
+import { supabase } from '@/services/supabase';
 import type { GameData } from '@/services/supabase-types';
-
 // Game phase enum for cleaner state management
 export type GamePhase = 'creation' | 'setup' | 'booking' | 'countdown' | 'playing' | 'finished';
 
@@ -42,13 +42,77 @@ export const GameDataProvider: React.FC<GameDataProviderProps> = ({
   // Determine subscription type based on props
   const isHostMode = !!userId && (!gameId || gameId === 'HOST_CURRENT');
   
-  // Use appropriate subscription hook
-  const hostGameSub = useHostCurrentGameSubscription(isHostMode ? userId : null);
-  const directGameSub = useGameSubscription(!isHostMode && gameId ? gameId : null);
-  
-  // Select active subscription data
-  const activeSubscription = isHostMode ? hostGameSub : directGameSub;
-  const { data: gameData, loading: isLoading, error } = activeSubscription;
+// Use appropriate subscription hooks
+const hostGameSub = useHostCurrentGameSubscription(isHostMode ? userId : null);
+const directGameSub = useGameSubscription(!isHostMode && gameId ? gameId : null);
+
+// Get prizes and tickets for the game
+const currentGameId = isHostMode ? hostGameSub.data?.id : gameId;
+const prizesSub = useGamePrizesSubscription(currentGameId);
+const ticketsSub = useGameTicketsSubscription(currentGameId);
+
+// Select active subscription data
+const activeSubscription = isHostMode ? hostGameSub : directGameSub;
+const { data: baseGameData, loading: isGameLoading, error: gameError } = activeSubscription;
+const { data: prizesData, loading: isPrizesLoading } = prizesSub;
+const { data: ticketsData, loading: isTicketsLoading } = ticketsSub;
+
+// Combine all loading states
+const isLoading = isGameLoading || isPrizesLoading || isTicketsLoading;
+const error = gameError;
+
+// Combine game data with prizes and tickets
+const gameData = useMemo(() => {
+  if (!baseGameData) return null;
+
+  // Convert prizes array to object format expected by GameHost
+  const prizesObject: { [key: string]: any } = {};
+  if (prizesData && Array.isArray(prizesData)) {
+    prizesData.forEach(prize => {
+      prizesObject[prize.id] = {
+        id: prize.id,
+        name: prize.name,
+        pattern: prize.pattern,
+        description: prize.description,
+        won: prize.won,
+        order: prize.prize_order,
+        winners: prize.winners || [],
+        winningNumber: prize.winning_number,
+        wonAt: prize.won_at
+      };
+    });
+  }
+
+  // Convert tickets array to object format
+  const ticketsObject: { [key: string]: any } = {};
+  if (ticketsData && Array.isArray(ticketsData)) {
+    ticketsData.forEach(ticket => {
+      ticketsObject[ticket.id] = {
+        ticketId: ticket.ticket_id,
+        gameId: ticket.game_id,
+        playerName: ticket.player_name,
+        playerPhone: ticket.player_phone,
+        rows: ticket.rows,
+        markedNumbers: ticket.marked_numbers || [],
+        isBooked: ticket.is_booked,
+        bookedAt: ticket.booked_at,
+        metadata: ticket.metadata,
+        positionInSet: ticket.position_in_set,
+        setId: ticket.set_id
+      };
+    });
+  }
+
+  // Return combined game data with all the properties GameHost expects
+  return {
+    ...baseGameData,
+    prizes: prizesObject,
+    tickets: ticketsObject,
+    maxTickets: baseGameData.max_tickets,
+    hostPhone: baseGameData.host_phone || '', // Add this if missing
+    name: baseGameData.name
+  };
+}, [baseGameData, prizesData, ticketsData]);
 
   // ==================== COMPUTED VALUES ====================
 
