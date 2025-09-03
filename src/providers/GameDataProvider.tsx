@@ -128,11 +128,11 @@ React.useEffect(() => {
     try {
       // Import the service dynamically to avoid circular imports
       const { supabaseService } = await import('@/services/supabase');
-      const hostSettings = await supabaseService.getHostSettings(baseGameData.host_id);
-      
-      if (hostSettings?.hostPhone) {
-        setHostPhoneFromSettings(hostSettings.hostPhone);
-      }
+     const hostSettings = await supabaseService.getHostSettings(baseGameData.host_id);
+
+        if (hostSettings?.settings?.hostPhone) {
+          setHostPhoneFromSettings(hostSettings.settings.hostPhone);
+        }
     } catch (error) {
       console.error('Error fetching host phone from settings:', error);
     }
