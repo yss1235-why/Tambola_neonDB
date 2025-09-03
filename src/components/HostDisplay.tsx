@@ -37,7 +37,18 @@ interface HostDisplayProps {
 
 export const HostDisplay: React.FC<HostDisplayProps> = ({ onCreateNewGame }) => {
   const { gameData, currentPhase, timeUntilAction, isLoading, error } = useGameData();
- const bookedCount = gameData ? Object.values(gameData.tickets || {}).filter(t => t.isBooked).length : 0;
+const bookedCount = React.useMemo(() => {
+  if (!gameData?.tickets) {
+    return 0;
+  }
+  
+  try {
+    return Object.values(gameData.tickets).filter(t => t && t.isBooked).length;
+  } catch (error) {
+    console.error('Error counting booked tickets in HostDisplay:', error);
+    return 0;
+  }
+}, [gameData?.tickets]);
   const hostControls = useHostControls();
 // ✅ Extract new properties
 const {
@@ -362,8 +373,15 @@ const {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          {Object.values(gameData.prizes)
-            .sort((a, b) => (a.order || 0) - (b.order || 0))
+          {(() => {
+            try {
+              return Object.values(gameData.prizes || {})
+                .sort((a, b) => (a.order || 0) - (b.order || 0));
+            } catch (error) {
+              console.error('Error processing prizes in HostDisplay:', error);
+              return [];
+            }
+          })()
             .map((prize) => {
               const isExpanded = expandedPrizes.has(prize.id);
               
