@@ -217,7 +217,7 @@ const AudioManagerForPlayer: React.FC<{
   const { gameData, currentPhase, isLoading, error } = useGameData();
   
   // Early return if user data not loaded yet
-  if (!user) {
+    if (!user || !user.id) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -227,7 +227,18 @@ const AudioManagerForPlayer: React.FC<{
       </div>
     );
   }
- const bookedCount = gameData ? Object.values(gameData.tickets || {}).filter(t => t.isBooked).length : 0;
+const bookedCount = React.useMemo(() => {
+  if (!gameData?.tickets) {
+    return 0;
+  }
+  
+  try {
+    return Object.values(gameData.tickets).filter(t => t && t.isBooked).length;
+  } catch (error) {
+    console.error('Error counting booked tickets:', error);
+    return 0;
+  }
+}, [gameData?.tickets]);
   
   // ================== SAFETY AND VALIDATION UTILITIES ==================
 
@@ -248,8 +259,16 @@ const AudioManagerForPlayer: React.FC<{
       errors.push('Max tickets cannot exceed 600');
     }
     
-    const bookedCount = Object.values(gameData.tickets || {})
-      .filter(ticket => ticket.isBooked).length;
+    let bookedCount = 0;
+    if (gameData && gameData.tickets) {
+      try {
+        bookedCount = Object.values(gameData.tickets)
+          .filter(ticket => ticket && ticket.isBooked).length;
+      } catch (error) {
+        console.error('Error calculating booked count:', error);
+        bookedCount = 0;
+      }
+    }
     if (maxTickets < bookedCount) {
       errors.push(`Cannot set max tickets (${maxTickets}) below current bookings (${bookedCount})`);
     }
@@ -392,8 +411,7 @@ const isSubscriptionValid = React.useCallback(() => {
   });
 
   return !isNaN(endDate.getTime()) && endDate > now && user.is_active;
-}, [user?.subscription_end_date, user?.is_active]);
-
+}, [user?.id, user?.subscription_end_date, user?.is_active]);
 const getSubscriptionStatus = React.useCallback(() => {
   if (!user?.subscription_end_date) {
     return { message: 'Loading...', variant: 'secondary' as const };
@@ -984,7 +1002,14 @@ if (gameData.game_state.isActive || gameData.game_state.isCountdown ||
       <HostDisplay onCreateNewGame={createNewGame} />
     <AudioManagerForHost
         currentNumber={gameData.game_state.currentNumber}
-        prizes={Object.values(gameData.prizes || {})}
+        prizes={(() => {
+        try {
+          return Object.values(gameData.prizes || {});
+        } catch (error) {
+          console.error('Error processing prizes for audio:', error);
+          return [];
+        }
+      })()}
         forceEnable={true}
         gameState={gameData.game_state}
       />
