@@ -20,8 +20,16 @@ export const PrizeManagementPanel: React.FC<PrizeManagementPanelProps> = ({
   gameData 
 }) => {
   // Get booked tickets for validation
-  const bookedTickets = gameData.tickets ? 
-    Object.values(gameData.tickets).filter(ticket => ticket.isBooked) : [];
+ const bookedTickets = (() => {
+    if (!gameData?.tickets) return [];
+    
+    try {
+      return Object.values(gameData.tickets).filter(ticket => ticket && ticket.isBooked);
+    } catch (error) {
+      console.error('Error processing tickets in PrizeManagementPanel:', error);
+      return [];
+    }
+  })();
 
   // Get prize display info
   const getPrizeDisplayInfo = (prize: Prize) => {
@@ -60,21 +68,42 @@ export const PrizeManagementPanel: React.FC<PrizeManagementPanelProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <div className="text-center p-3 bg-blue-50 rounded-lg border border-blue-200">
               <div className="text-2xl font-bold text-blue-600">
-                {Object.keys(gameData.prizes || {}).length}
+                {(() => {
+                  try {
+                    return Object.keys(gameData.prizes || {}).length;
+                  } catch (error) {
+                    console.error('Error calculating total prizes:', error);
+                    return 0;
+                  }
+                })()}
               </div>
               <div className="text-sm text-blue-700">Total Prizes</div>
             </div>
             <div className="text-center p-3 bg-green-50 rounded-lg border border-green-200">
               <div className="text-2xl font-bold text-green-600">
-                {Object.values(gameData.prizes || {}).filter(p => p.won).length}
+                {(() => {
+                  try {
+                    return Object.values(gameData.prizes || {}).filter(p => p && p.won).length;
+                  } catch (error) {
+                    console.error('Error calculating won prizes:', error);
+                    return 0;
+                  }
+                })()}
               </div>
               <div className="text-sm text-green-700">Prizes Won</div>
             </div>
             <div className="text-center p-3 bg-purple-50 rounded-lg border border-purple-200">
               <div className="text-2xl font-bold text-purple-600">
-                {Object.values(gameData.prizes || {}).reduce((total, prize) => 
-                  total + (prize.winners?.length || 0), 0
-                )}
+                {(() => {
+                  try {
+                    return Object.values(gameData.prizes || {}).reduce((total, prize) => 
+                      total + ((prize && prize.winners && prize.winners.length) || 0), 0
+                    );
+                  } catch (error) {
+                    console.error('Error calculating total winners:', error);
+                    return 0;
+                  }
+               })()}
               </div>
               <div className="text-sm text-purple-700">Total Winners</div>
             </div>
@@ -95,8 +124,15 @@ export const PrizeManagementPanel: React.FC<PrizeManagementPanelProps> = ({
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {Object.values(gameData.prizes || {})
-              .sort((a, b) => (a.order || 0) - (b.order || 0))
+           {(() => {
+              try {
+                return Object.values(gameData.prizes || {})
+                  .sort((a, b) => (a.order || 0) - (b.order || 0));
+              } catch (error) {
+                console.error('Error processing prize list:', error);
+                return [];
+              }
+            })()
               .map((prize) => {
               const displayInfo = getPrizeDisplayInfo(prize);
               
@@ -165,7 +201,14 @@ export const PrizeManagementPanel: React.FC<PrizeManagementPanelProps> = ({
           </div>
 
           {/* No Prizes Message */}
-          {Object.keys(gameData.prizes || {}).length === 0 && (
+         {(() => {
+            try {
+              return Object.keys(gameData.prizes || {}).length === 0;
+            } catch (error) {
+              console.error('Error checking prizes:', error);
+              return true;
+            }
+          })() && (
             <div className="text-center py-8">
               <Trophy className="w-12 h-12 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-600">No prizes configured for this game.</p>
