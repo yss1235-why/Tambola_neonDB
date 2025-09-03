@@ -88,20 +88,39 @@ export const UserLandingPage: React.FC<UserLandingPageProps> = ({
     if (!gameDataSource.games) return [];
     
     return gameDataSource.games.map(game => {
-     const bookedTickets = game.tickets ? 
-        Object.values(game.tickets || {}).filter(t => t.isBooked).length : 0;
+     const bookedTickets = (() => {
+        try {
+          return Object.values(game.tickets || {}).filter(t => t && t.isBooked).length;
+        } catch (error) {
+          console.error('Error counting tickets in UserLandingPage:', error);
+          return 0;
+        }
+      })();
       
       // 🆕 NEW: Calculate winner statistics for completed games
       let winnerCount = 0;
       let prizesWon = 0;
-     const totalPrizes = Object.keys(game.prizes || {}).length;
+    const totalPrizes = (() => {
+        try {
+          return Object.keys(game.prizes || {}).length;
+        } catch (error) {
+          console.error('Error counting total prizes in UserLandingPage:', error);
+          return 0;
+        }
+      })();
       
-    if (game.game_state.gameOver) {
-        const wonPrizes = Object.values(game.prizes || {}).filter(p => p.won);
-        prizesWon = wonPrizes.length;
-        winnerCount = wonPrizes.reduce((total, prize) => 
-          total + (prize.winners?.length || 0), 0
-        );
+  if (game.game_state.gameOver) {
+        try {
+          const wonPrizes = Object.values(game.prizes || {}).filter(p => p && p.won);
+          prizesWon = wonPrizes.length;
+          winnerCount = wonPrizes.reduce((total, prize) => 
+            total + ((prize && prize.winners && prize.winners.length) || 0), 0
+          );
+        } catch (error) {
+          console.error('Error calculating winner stats in UserLandingPage:', error);
+          prizesWon = 0;
+          winnerCount = 0;
+        }
       }
       
       return {
