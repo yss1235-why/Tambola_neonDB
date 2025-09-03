@@ -85,26 +85,25 @@ const gameData = useMemo(() => {
     });
   }
 
-  // Convert tickets array to object format
-  const ticketsObject: { [key: string]: any } = {};
-  if (ticketsData && Array.isArray(ticketsData)) {
-    ticketsData.forEach(ticket => {
-      ticketsObject[ticket.id] = {
-        ticketId: ticket.ticket_id,
-        gameId: ticket.game_id,
-        playerName: ticket.player_name,
-        playerPhone: ticket.player_phone,
-        rows: ticket.rows,
-        markedNumbers: ticket.marked_numbers || [],
-        isBooked: ticket.is_booked,
-        bookedAt: ticket.booked_at,
-        metadata: ticket.metadata,
-        positionInSet: ticket.position_in_set,
-        setId: ticket.set_id
-      };
-    });
-  }
-
+ // Convert tickets array to object format
+const ticketsObject: { [key: string]: any } = {};
+if (ticketsData && Array.isArray(ticketsData)) {
+  ticketsData.forEach(ticket => {
+    ticketsObject[ticket.ticket_id] = { // Use ticket_id as key (human readable: "1", "2", "3")
+      ticketId: ticket.ticket_id,
+      gameId: ticket.game_id,
+      playerName: ticket.player_name,
+      playerPhone: ticket.player_phone,
+      rows: ticket.rows,
+      markedNumbers: ticket.marked_numbers || [],
+      isBooked: ticket.is_booked,
+      bookedAt: ticket.booked_at,
+      metadata: ticket.metadata,
+      positionInSet: ticket.position_in_set,
+      setId: ticket.set_id
+    };
+  });
+}
   // Return combined game data with all the properties GameHost expects
   return {
     ...baseGameData,
