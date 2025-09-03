@@ -46,8 +46,10 @@ export const GameDataProvider: React.FC<GameDataProviderProps> = ({
 const hostGameSub = useHostCurrentGameSubscription(isHostMode ? userId : null);
 const directGameSub = useGameSubscription(!isHostMode && gameId ? gameId : null);
 
-// Get prizes and tickets for the game
+// Get current game ID for subscriptions
 const currentGameId = isHostMode ? hostGameSub.data?.id : gameId;
+
+// Subscribe to tickets and prizes for real-time updates
 const prizesSub = useGamePrizesSubscription(currentGameId);
 const ticketsSub = useGameTicketsSubscription(currentGameId);
 
@@ -57,7 +59,7 @@ const { data: baseGameData, loading: isGameLoading, error: gameError } = activeS
 const { data: prizesData, loading: isPrizesLoading } = prizesSub;
 const { data: ticketsData, loading: isTicketsLoading } = ticketsSub;
 
-// Combine all loading states
+// Combine all loading states  
 const isLoading = isGameLoading || isPrizesLoading || isTicketsLoading;
 const error = gameError;
 
@@ -150,11 +152,11 @@ const finalGameData = useMemo(() => {
     return gameData;
   }
   
-  // Otherwise, use phone from host settings
-  return {
-    ...gameData,
-    hostPhone: hostPhoneFromSettings || ''
-  };
+ // Otherwise, use phone from host settings
+return {
+  ...gameData,
+  hostPhone: hostPhoneFromSettings || ''
+};
 }, [gameData, hostPhoneFromSettings]);
 
 // ==================== COMPUTED VALUES ====================
