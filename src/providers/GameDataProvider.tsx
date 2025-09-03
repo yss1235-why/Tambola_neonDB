@@ -109,53 +109,94 @@ const gameData = useMemo(() => {
     prizes: prizesObject,
     tickets: ticketsObject,
     maxTickets: baseGameData.max_tickets,
-    hostPhone: baseGameData.host_phone || '', // Add this if missing
+    hostPhone: baseGameData.host_phone || baseGameData.hostPhone || '', // Try both possible field names
     name: baseGameData.name
   };
 }, [baseGameData, prizesData, ticketsData]);
 
-  // ==================== COMPUTED VALUES ====================
+// ==================== FETCH HOST PHONE FROM SETTINGS ====================
 
-  // Determine current game phase
-  const currentPhase: GamePhase = useMemo(() => {
-    if (!gameData) return 'creation';
-    
-    switch (gameData.status) {
-      case 'setup':
-        return 'setup';
-      case 'countdown':
-        return 'countdown';
-      case 'active':
-        return gameData.game_state?.isActive ? 'playing' : 'booking';
-      case 'paused':
-        return 'playing'; // Still in playing phase, just paused
-      case 'finished':
-        return 'finished';
-      default:
-        return 'setup';
+// Add host phone from host settings if not already present
+const [hostPhoneFromSettings, setHostPhoneFromSettings] = React.useState<string>('');
+
+React.useEffect(() => {
+  const fetchHostPhone = async () => {
+    if (!baseGameData || hostPhoneFromSettings || (gameData?.hostPhone && gameData.hostPhone.trim() !== '')) {
+      return; // Already have phone or no game data
     }
-  }, [gameData]);
 
-  // Calculate time until next action (for countdown, etc.)
-  const timeUntilAction = useMemo(() => {
-    if (!gameData) return 0;
-    
-    if (currentPhase === 'countdown') {
-      return gameData.game_state?.countdownTime || 0;
+    try {
+      // Import the service dynamically to avoid circular imports
+      const { supabaseService } = await import('@/services/supabase');
+      const hostSettings = await supabaseService.getHostSettings(baseGameData.host_id);
+      
+      if (hostSettings?.hostPhone) {
+        setHostPhoneFromSettings(hostSettings.hostPhone);
+      }
+    } catch (error) {
+      console.error('Error fetching host phone from settings:', error);
     }
-    
-    return 0;
-  }, [gameData, currentPhase]);
+  };
 
-  // ==================== CONTEXT VALUE ====================
+  fetchHostPhone();
+}, [baseGameData?.host_id, hostPhoneFromSettings, gameData?.hostPhone]);
 
-  const contextValue: GameDataContextValue = useMemo(() => ({
-    gameData,
-    currentPhase,
-    timeUntilAction,
-    isLoading,
-    error
-  }), [gameData, currentPhase, timeUntilAction, isLoading, error]);
+// Final gameData with host phone from settings if needed
+const finalGameData = useMemo(() => {
+  if (!gameData) return null;
+  
+  // If we already have a phone in gameData, use it
+  if (gameData.hostPhone && gameData.hostPhone.trim() !== '') {
+    return gameData;
+  }
+  
+  // Otherwise, use phone from host settings
+  return {
+    ...gameData,
+    hostPhone: hostPhoneFromSettings || ''
+  };
+}, [gameData, hostPhoneFromSettings]);
+
+// ==================== COMPUTED VALUES ====================
+
+// Determine current game phase
+const currentPhase: GamePhase = useMemo(() => {
+  if (!finalGameData) return 'creation';
+  
+  switch (finalGameData.status) {
+    case 'setup':
+      return 'setup';
+    case 'countdown':
+      return 'countdown';
+    case 'active':
+      return finalGameData.game_state?.isActive ? 'playing' : 'booking';
+    case 'paused':
+      return 'playing'; // Still in playing phase, just paused
+    case 'finished':
+      return 'finished';
+    default:
+      return 'setup';
+  }
+}, [finalGameData]);
+
+// Calculate time until next action (for countdown, etc.)
+const timeUntilAction = useMemo(() => {
+  if (!finalGameData) return 0;
+  
+  if (currentPhase === 'countdown') {
+    return finalGameData.game_state?.countdownTime || 0;
+  }
+  
+  return 0;
+}, [finalGameData, currentPhase]);
+
+const contextValue: GameDataContextValue = useMemo(() => ({
+  gameData: finalGameData,
+  currentPhase,
+  timeUntilAction,
+  isLoading,
+  error
+}), [finalGameData, currentPhase, timeUntilAction, isLoading, error]);
 
   return (
     <GameDataContext.Provider value={contextValue}>
