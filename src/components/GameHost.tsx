@@ -830,6 +830,55 @@ const getCurrentView = (): 'create' | 'booking' | 'live' | 'winners' | 'setup' =
     console.log('❌ GameHost: No game data or game state, returning setup');
     return 'setup';
   }
+  
+  // ✅ NEW: Check if game is properly configured
+  const isGameProperlyConfigured = (() => {
+    try {
+      // Check 1: Must have at least one prize
+      const prizes = gameData.prizes || {};
+      const prizeCount = Object.keys(prizes).length;
+      if (prizeCount === 0) {
+        console.log('❌ GameHost: No prizes configured');
+        return false;
+      }
+      
+      // Check 2: Must have tickets available
+      if (!gameData.maxTickets || gameData.maxTickets <= 0) {
+        console.log('❌ GameHost: No tickets available (maxTickets invalid)');
+        return false;
+      }
+      
+      // Check 3: Must have host phone number
+      if (!gameData.hostPhone || gameData.hostPhone.trim() === '') {
+        console.log('❌ GameHost: No host phone number configured');
+        return false;
+      }
+      
+      // Check 4: Game must have a valid name
+      if (!gameData.name || gameData.name.trim() === '') {
+        console.log('❌ GameHost: No game name configured');
+        return false;
+      }
+      
+      console.log('✅ GameHost: Game is properly configured', {
+        prizes: prizeCount,
+        maxTickets: gameData.maxTickets,
+        hasPhone: !!gameData.hostPhone,
+        hasName: !!gameData.name
+      });
+      return true;
+      
+    } catch (error) {
+      console.error('❌ GameHost: Error checking game configuration:', error);
+      return false;
+    }
+  })();
+  
+  if (!isGameProperlyConfigured) {
+    console.log('🔧 GameHost: Game not properly configured, returning setup');
+    return 'setup';
+  }
+  
   if (gameData.game_state.gameOver) {
     console.log('🏁 GameHost: Game over, returning winners');
     return 'winners';
@@ -840,7 +889,7 @@ if (gameData.game_state.isActive || gameData.game_state.isCountdown ||
     console.log('🎮 GameHost: Game started/paused - returning LIVE view');
     return 'live';
   }
-  console.log('🎫 GameHost: Default - returning booking view');
+  console.log('🎫 GameHost: Game properly configured - returning booking view');
   return 'booking';
 };
   const currentView = getCurrentView();
