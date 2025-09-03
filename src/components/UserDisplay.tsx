@@ -44,7 +44,15 @@ export const UserDisplay: React.FC = () => {
   // ✅ CHANGED: Use visual called numbers instead of database
 
   const currentNumber = gameData?.game_state?.currentNumber;
-  const prizes = gameData ? Object.values(gameData.prizes || {}).sort((a, b) => (a.order || 0) - (b.order || 0)) : [];
+ const prizes = (() => {
+    if (!gameData) return [];
+    try {
+      return Object.values(gameData.prizes || {}).sort((a, b) => (a.order || 0) - (b.order || 0));
+    } catch (error) {
+      console.error('Error processing prizes in UserDisplay:', error);
+      return [];
+    }
+  })();
   // ✅ NEW: Validate ticket ID format consistency
   const validateTicketFormat = React.useCallback(() => {
     const ticketIds = Object.keys(tickets);
@@ -122,9 +130,16 @@ export const UserDisplay: React.FC = () => {
       console.log(`✅ Found booked ticket: ${actualTicketId} for ${ticket.playerName}`);
       
       // Find all tickets by this player
-      const playerTickets = Object.values(tickets).filter(
-        t => t.isBooked && t.playerName === ticket.playerName
-      );
+      const playerTickets = (() => {
+        try {
+          return Object.values(tickets).filter(
+            t => t && t.isBooked && t.playerName === ticket.playerName
+          );
+        } catch (error) {
+          console.error('Error finding player tickets:', error);
+          return [];
+        }
+      })();
 
       console.log(`👥 Found ${playerTickets.length} tickets for player: ${ticket.playerName}`);
 
@@ -504,9 +519,16 @@ export const UserDisplay: React.FC = () => {
 
         {/* Audio Manager for Users */}
         {gameData && (
-         <AudioManager
+        <AudioManager
             currentNumber={gameData.game_state?.currentNumber}
-            prizes={Object.values(gameData.prizes || {})}
+            prizes={(() => {
+              try {
+                return Object.values(gameData.prizes || {});
+              } catch (error) {
+                console.error('Error processing prizes for AudioManager:', error);
+                return [];
+              }
+            })()}
             onAudioComplete={() => {
               // For users, no callback needed - only hosts need timing control
               console.log('🔊 User audio announcement completed');
