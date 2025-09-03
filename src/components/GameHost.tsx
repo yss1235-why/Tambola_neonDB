@@ -361,11 +361,11 @@ const bookedCount = React.useMemo(() => {
   });
   const [editMode, setEditMode] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
-  const [createGameForm, setCreateGameForm] = useState<CreateGameForm>({
+ const [createGameForm, setCreateGameForm] = useState<CreateGameForm>({
   hostPhone: '',
   maxTickets: '100',
   selectedTicketSet: '1',
-  selectedPrizes: ['quickFive', 'topLine', 'middleLine', 'bottomLine', 'fullHouse']
+  selectedPrizes: ['earlyFive', 'topLine', 'middleLine', 'bottomLine', 'fullHouse'] // ✅ Changed quickFive to earlyFive
 });
 const [isCreatingGame, setIsCreatingGame] = useState(false);
 const [gameCreationError, setGameCreationError] = useState<string | null>(null);
@@ -634,17 +634,17 @@ if (cachedWinnerData) {
      const now = new Date();
      const gameName = `Tambola Game - ${now.toLocaleDateString()} ${now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
      
-   const prizesToCreate = createGameForm.selectedPrizes.map((prizeId: string) => {
+    const prizesToCreate = createGameForm.selectedPrizes.map((prizeId: string) => {
       const prizeTemplate = AVAILABLE_PRIZES.find(p => p.id === prizeId);
       return {
-        id: prizeId,
+        // ✅ REMOVED id field - let database auto-generate UUID
         name: prizeTemplate?.name || prizeId,
         pattern: prizeTemplate?.pattern || '',
         description: prizeTemplate?.description || '',
         prize_order: prizeTemplate?.order || 0,
         won: false,
-        winners: [],         // ✅ CORRECT! Match database 'winners' column (jsonb array)
-        winning_number: null // ✅ CORRECT! Match database 'winning_number' column
+        winners: [],
+        winning_number: null
       };
     });
      const gameConfig = {
