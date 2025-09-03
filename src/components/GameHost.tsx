@@ -635,18 +635,18 @@ if (cachedWinnerData) {
      const gameName = `Tambola Game - ${now.toLocaleDateString()} ${now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
      
    const prizesToCreate = createGameForm.selectedPrizes.map((prizeId: string) => {
-       const prizeTemplate = AVAILABLE_PRIZES.find(p => p.id === prizeId);
-       return {
-         id: prizeId,
-         name: prizeTemplate?.name || prizeId,
-         pattern: prizeTemplate?.pattern || '',
-         description: prizeTemplate?.description || '',
-         prize_order: prizeTemplate?.order || 0,
-         won: false,
-         winner: null,
-         winningTicket: null
-       };
-     });
+      const prizeTemplate = AVAILABLE_PRIZES.find(p => p.id === prizeId);
+      return {
+        id: prizeId,
+        name: prizeTemplate?.name || prizeId,
+        pattern: prizeTemplate?.pattern || '',
+        description: prizeTemplate?.description || '',
+        prize_order: prizeTemplate?.order || 0,
+        won: false,
+        winners: [],         // ✅ CORRECT! Match database 'winners' column (jsonb array)
+        winning_number: null // ✅ CORRECT! Match database 'winning_number' column
+      };
+    });
      const gameConfig = {
           name: gameName,
           host_id: user.id, // ✅ FIXED: Use correct Supabase property
