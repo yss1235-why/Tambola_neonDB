@@ -536,7 +536,6 @@ class SupabaseGameService {
   }
 
   /**
- /**
    * Unbook ticket (cancel booking)
    */
   async unbookTicket(gameId: string, ticketId: string): Promise<void> {
