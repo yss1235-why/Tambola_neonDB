@@ -1,6 +1,6 @@
 // src/components/GameHost.tsx - COMPLETE: Single Source of Truth Implementation + Expansion-Only Tickets
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -213,11 +213,28 @@ const AudioManagerForPlayer: React.FC<{
     />
   );
 };
-  export const GameHost: React.FC<GameHostProps> = ({ user }) => {
+ 
+ export const GameHost: React.FC<GameHostProps> = ({ user }) => {
   const { gameData, currentPhase, isLoading, error } = useGameData();
+
+  // Add this refresh function to handle manual refreshes
+  const handleRefreshGame = useCallback(async () => {
+    if (!gameData?.id) return;
+    
+    try {
+      console.log('🔄 Manual refresh triggered for game:', gameData.id);
+      // Force a re-fetch by invalidating cache (the subscriptions should handle the rest)
+      // In a real implementation, you might want to force a subscription refresh
+      
+      // For now, just log the refresh attempt
+      // The real-time subscriptions should handle automatic updates
+    } catch (error) {
+      console.error('Error refreshing game data:', error);
+    }
+  }, [gameData?.id]);
   
   // Early return if user data not loaded yet
-    if (!user || !user.id) {
+  if (!user || !user.id) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -227,7 +244,8 @@ const AudioManagerForPlayer: React.FC<{
       </div>
     );
   }
-const bookedCount = React.useMemo(() => {
+
+  const bookedCount = React.useMemo(() => {
   if (!gameData?.tickets) {
     return 0;
   }
@@ -1019,9 +1037,9 @@ if (gameData.game_state.isActive || gameData.game_state.isCountdown ||
               <HostDisplay />
             </HostControlsProvider>
             
-            <TicketManagementGrid
+           <TicketManagementGrid
               gameData={gameData}
-              onRefreshGame={() => {}}
+              onRefreshGame={handleRefreshGame}
             />
           </div>
         )}
