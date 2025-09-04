@@ -536,6 +536,35 @@ class SupabaseGameService {
   }
 
   /**
+ /**
+   * Unbook ticket (cancel booking)
+   */
+  async unbookTicket(gameId: string, ticketId: string): Promise<void> {
+    try {
+      const { error } = await supabase
+        .from('tickets')
+        .update({
+          is_booked: false,
+          player_name: '',
+          player_phone: null,
+          booked_at: null
+        })
+        .eq('ticket_id', ticketId)
+        .eq('game_id', gameId);
+
+      if (error) {
+        throw error;
+      }
+
+      console.log('✅ Ticket unbooked:', ticketId);
+
+    } catch (error: any) {
+      console.error('❌ Error unbooking ticket:', error);
+      throw new Error(error.message || 'Failed to unbook ticket');
+    }
+  }
+
+  /**
    * Mark number on ticket
    */
   async markTicketNumber(ticketId: string, number: number): Promise<void> {
