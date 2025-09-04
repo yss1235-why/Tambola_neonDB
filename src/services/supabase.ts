@@ -300,8 +300,12 @@ class SupabaseService {
     return supabaseGame.createTicket(ticketData);
   }
 
-  async bookTicket(ticketId: string, playerName: string, playerPhone?: string) {
+ async bookTicket(ticketId: string, playerName: string, playerPhone?: string) {
     return supabaseGame.bookTicket(ticketId, playerName, playerPhone);
+  }
+
+  async unbookTicket(gameId: string, ticketId: string) {
+    return supabaseGame.unbookTicket(gameId, ticketId);
   }
 
   async markTicketNumber(ticketId: string, number: number) {
