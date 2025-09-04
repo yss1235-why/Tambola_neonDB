@@ -47,14 +47,21 @@ function useSupabaseSubscription<T>(
 
       let query = supabase.from(tableName).select(selectQuery);
       
-      // Apply filter if provided
+     // Apply filter if provided
       if (filter) {
-        // Parse filter string like "game_id=eq.123" 
-        const [column, operator, value] = filter.split(/[=.]/);
-        if (operator === 'eq') {
-          query = query.eq(column, value);
+        // Parse filter string like "game_id=eq.123"
+        const filterParts = filter.split('=');
+        if (filterParts.length >= 2) {
+          const column = filterParts[0];
+          const operatorAndValue = filterParts.slice(1).join('='); // Handle values with = signs
+          const [operator, ...valueParts] = operatorAndValue.split('.');
+          const value = valueParts.join('.'); // Handle values with dots
+          
+          if (operator === 'eq') {
+            query = query.eq(column, value);
+          }
+          // Add more operators as needed
         }
-        // Add more operators as needed
       }
 
       const { data, error } = await query;
@@ -356,10 +363,17 @@ export function useCustomSubscription<T>(
     const fetchData = async () => {
       let query = supabase.from(tableName).select(selectQuery);
       
-      if (filter) {
-        const [column, operator, value] = filter.split(/[=.]/);
-        if (operator === 'eq') {
-          query = query.eq(column, value);
+     if (filter) {
+        const filterParts = filter.split('=');
+        if (filterParts.length >= 2) {
+          const column = filterParts[0];
+          const operatorAndValue = filterParts.slice(1).join('=');
+          const [operator, ...valueParts] = operatorAndValue.split('.');
+          const value = valueParts.join('.');
+          
+          if (operator === 'eq') {
+            query = query.eq(column, value);
+          }
         }
       }
 
