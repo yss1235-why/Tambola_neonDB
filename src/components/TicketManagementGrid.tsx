@@ -454,7 +454,7 @@ export const TicketManagementGrid: React.FC<TicketManagementGridProps> = ({
       <Dialog open={showBookingDialog} onOpenChange={setShowBookingDialog}>
         <DialogContent>
           <DialogHeader>
-            
+            <DialogTitle>Book Selected Tickets</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
